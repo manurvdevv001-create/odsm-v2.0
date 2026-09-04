@@ -9,14 +9,26 @@ import { logActivity } from "@/lib/activity-logger";
 
 
 // Utility to generate transaction number
-function generateTransactionNumber(counter: number): string {
-    const prefix = "TRN";
+function generateTransactionNumber(counter: number, format?: string | null): string {
     const date = new Date();
-    const year = date.getFullYear().toString().slice(-2);
+    const year = date.getFullYear().toString();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
+
+    if (format) {
+        return format
+            .replace('{YYYY}', year)
+            .replace('{YY}', year.slice(-2))
+            .replace('{MM}', month)
+            .replace(/{NO:(\d+)}/g, (_, p1) => counter.toString().padStart(parseInt(p1), '0'))
+            // Fallback if no NO token
+            .replace('{NO}', counter.toString().padStart(4, '0'));
+    }
+
+    // Default legacy format
+    const yearShort = year.slice(-2);
     const day = date.getDate().toString().padStart(2, '0');
     const seq = counter.toString().padStart(5, '0');
-    return `${prefix}${year}${month}${day}-${seq}`;
+    return `TRN${yearShort}${month}${day}-${seq}`;
 }
 
 // Save image implementation - simple base64 to file logic or just returning base64 if we want to store it in DB
@@ -77,7 +89,7 @@ export async function saveStudentData(matricule: string, studentData: any, payme
     try {
         const school = await db.school.findUnique({
             where: { matricule },
-            select: { calendar: true, financeSettings: true, transactionCounter: true }
+            select: { calendar: true, financeSettings: true, transactionCounter: true, configuration: true }
         });
 
         if (!school) {
@@ -181,7 +193,8 @@ export async function saveStudentData(matricule: string, studentData: any, payme
         // Create payment if provided
         if (paymentData) {
             const newCounter = (school.transactionCounter || 0) + 1;
-            const transactionNumber = generateTransactionNumber(newCounter);
+            const receiptFormat = JSON.parse(school.configuration || '{}').receiptSettings?.numberFormat || null;
+            const transactionNumber = generateTransactionNumber(newCounter, receiptFormat);
 
             await db.payment.create({
                 data: {
@@ -300,7 +313,7 @@ export async function updateStudentPaymentStatus(matricule: string, studentId: s
     try {
         const school = await db.school.findUnique({
             where: { matricule },
-            select: { calendar: true, transactionCounter: true }
+            select: { calendar: true, transactionCounter: true, configuration: true }
         });
 
         if (!school) throw new Error("École non trouvée !");
@@ -309,7 +322,8 @@ export async function updateStudentPaymentStatus(matricule: string, studentId: s
         if (!activeYear) throw new Error("Aucune année scolaire active.");
 
         const newCounter = (school.transactionCounter || 0) + 1;
-        const transactionNumber = generateTransactionNumber(newCounter);
+        const receiptFormat = JSON.parse(school.configuration || '{}').receiptSettings?.numberFormat || null;
+        const transactionNumber = generateTransactionNumber(newCounter, receiptFormat);
 
         // Block payment/status updates for archived-year students
         await assertStudentInActiveYear(matricule, studentId);
@@ -415,7 +429,7 @@ export async function saveSchoolFeePayment(matricule: string, paymentData: Payme
     try {
         const school = await db.school.findUnique({
             where: { matricule },
-            select: { calendar: true, transactionCounter: true }
+            select: { calendar: true, transactionCounter: true, configuration: true }
         });
 
         if (!school) {
@@ -429,7 +443,8 @@ export async function saveSchoolFeePayment(matricule: string, paymentData: Payme
         }
 
         const newCounter = (school.transactionCounter || 0) + 1;
-        const transactionNumber = generateTransactionNumber(newCounter);
+        const receiptFormat = JSON.parse(school.configuration || '{}').receiptSettings?.numberFormat || null;
+        const transactionNumber = generateTransactionNumber(newCounter, receiptFormat);
 
         // Ensure we're not adding payments for archived-year students
         if (paymentData.studentId) {

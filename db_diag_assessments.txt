@@ -1,0 +1,8 @@
+=== ASSESSMENT DIAGNOSTIC ===
+Assessments for classroom bd6ef3f6-259d-44e2-8950-3298e9dbb378: 6
+- Title: 'int01', Course: 'Géométrie' (e94fd439-204e-4bac-aca2-a8b267b40eb8), Period: 'Semestre 1 - Période 1' (f77c0b6f-d6a5-487a-bf3d-f720d171ee43), Published: true
+- Title: 'interro01', Course: 'Arithmétique' (f2a63b40-f6b1-4da8-a466-6bd981e71062), Period: 'Semestre 1 - Période 1' (f77c0b6f-d6a5-487a-bf3d-f720d171ee43), Published: true
+- Title: 'int02', Course: 'Géométrie' (de8ea00e-6456-4a16-9e43-01f8084dac07), Period: 'Semestre 1 - Période 1' (f77c0b6f-d6a5-487a-bf3d-f720d171ee43), Published: true
+- Title: 'int03', Course: 'Géométrie' (de8ea00e-6456-4a16-9e43-01f8084dac07), Period: 'Semestre 1 - Période 1' (f77c0b6f-d6a5-487a-bf3d-f720d171ee43), Published: true
+- Title: 'interro02', Course: 'Arithmétique' (f2a63b40-f6b1-4da8-a466-6bd981e71062), Period: 'Semestre 1 - Période 1' (f77c0b6f-d6a5-487a-bf3d-f720d171ee43), Published: true
+- Title: 'alg01', Course: 'Algèbre' (68d5f723-af15-44bc-8979-341da336164d), Period: 'Semestre 1 - Période 1' (f77c0b6f-d6a5-487a-bf3d-f720d171ee43), Published: true

@@ -1,0 +1,36 @@
+# GSD State Files
+.gsd/ARCHITECTURE.md
+.gsd/DECISIONS.md
+.gsd/JOURNAL.md
+.gsd/ROADMAP.md
+.gsd/SPEC.md
+.gsd/STACK.md
+.gsd/STATE.md
+.gsd/TODO.md
+
+# OS generated
+Thumbs.db
+.DS_Store
+node_modules
+
+# Next.js
+.next
+out
+build
+
+# Env files
+.env
+.env*.local
+
+# SQLite Database
+*.db
+*.db-shm
+*.db-wal
+baseline.sql
+scripts/deploy_turso.mjs
+
+# Typescript
+*.tsbuildinfo
+
+# Ignorer le dossier de sauvegarde
+backup/

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ODSM - Connexion...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: #f8fafc;
+            color: #1e293b;
+            text-align: center;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h1 { font-size: 1.5rem; margin-bottom: 10px; }
+        p { color: #64748b; padding: 0 20px; }
+        .status { margin-top: 20px; font-size: 0.8rem; color: #94a3b8; font-family: monospace; }
+        .error { color: #ef4444; margin-top: 20px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="loader"></div>
+    <h1>Recherche du serveur ODSM</h1>
+    <p>Recherche automatique de l'ordinateur de bureau sur votre réseau Wi-Fi...</p>
+    <div class="status" id="status">Calcul du réseau...</div>
+    <div class="error" id="error">
+        Délai d'attente dépassé.<br>
+        Vérifiez que le Wi-Fi est activé et que le serveur tourne sur l'ordinateur.
+    </div>
+
+    <script>
+        const PORT = 3000;
+        const DISCOVERY_PATH = '/api/discovery';
+        const statusEl = document.getElementById('status');
+        const errorEl = document.getElementById('error');
+
+        // Note: Sur un hotspot Android, le serveur (le PC) a souvent une IP spécifique.
+        // On va scanner la plage 10.222.62.X car c'est celle utilisée par l'utilisateur.
+        const SUBNET = '10.222.62'; 
+
+        async function scan() {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+            let found = false;
+
+            // On teste d'abord les IPs probables (la .34 et les premières/dernières)
+            const ips = [34, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            // On ajoute le reste de la plage
+            for(let i = 11; i < 255; i++) { if(i !== 34) ips.push(i); }
+
+            for (const i of ips) {
+                if (found) break;
+                const ip = `${SUBNET}.${i}`;
+                statusEl.textContent = `Test de ${ip}...`;
+
+                try {
+                    const response = await fetch(`http://${ip}:${PORT}${DISCOVERY_PATH}`, {
+                        signal: controller.signal,
+                        mode: 'cors'
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.service === 'odsm-server') {
+                            found = true;
+                            statusEl.textContent = "Serveur trouvé ! Redirection...";
+                            window.location.href = `http://${ip}:${PORT}/dashboard`;
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    // Ignorer les erreurs de connexion/timeout pour continuer le scan
+                }
+            }
+
+            if (!found) {
+                statusEl.style.display = 'none';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        // On lance le scan au chargement
+        window.onload = scan;
+    </script>
+</body>
+</html>

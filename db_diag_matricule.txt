@@ -1,0 +1,12 @@
+=== CLASSROOM MATRICULE DIAGNOSTIC ===
+Classrooms matching '7e CTEB A': 1
+- Name: '7e CTEB A', ID: bd6ef3f6-259d-44e2-8950-3298e9dbb378, Matricule: '67AM3C'
+
+Schools in DB: 7
+- Name: 'COLLEGE BOBOTO', Matricule: '67AM3C'
+- Name: 'COLLEGE ELIKYA', Matricule: '0236BY'
+- Name: 'COLLEGE St. MARTIN', Matricule: 'I37KGR'
+- Name: 'COLLEGE St. MARTIN', Matricule: 'I9ND0H'
+- Name: 'COLLEGE St. MARTIN', Matricule: '9MI2ZH'
+- Name: 'COLLEGE St. MARTIN', Matricule: 'B1SUCD'
+- Name: 'INSTITUT ELIKYA', Matricule: '204XHV'

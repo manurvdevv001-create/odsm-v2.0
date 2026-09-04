@@ -1,0 +1,633 @@
+﻿{
+    "assessments":  [
+                        {
+                            "id":  "786a4004-f0e7-4d39-baff-aa764a28fde8",
+                            "title":  "interro01",
+                            "courseId":  "e4820497-5590-4a58-bd96-32b0bd68e7e5",
+                            "courseName":  "Vocabulaire",
+                            "classroomId":  "0c32d157-241a-4a34-9c65-6325bc4869e1",
+                            "classroomName":  "1e Primaire A",
+                            "periodId":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                            "periodName":  "Trimestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "a98bc6c7-dd73-4e94-bd38-3274e2b9517e",
+                            "title":  "interro02",
+                            "courseId":  "e4820497-5590-4a58-bd96-32b0bd68e7e5",
+                            "courseName":  "Vocabulaire",
+                            "classroomId":  "0c32d157-241a-4a34-9c65-6325bc4869e1",
+                            "classroomName":  "1e Primaire A",
+                            "periodId":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                            "periodName":  "Trimestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "f1273c17-0fe8-4a5a-a40a-0646be88ba88",
+                            "title":  "Devoir N.1",
+                            "courseId":  "e4820497-5590-4a58-bd96-32b0bd68e7e5",
+                            "courseName":  "Vocabulaire",
+                            "classroomId":  "0c32d157-241a-4a34-9c65-6325bc4869e1",
+                            "classroomName":  "1e Primaire A",
+                            "periodId":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                            "periodName":  "Trimestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "c9ac2860-e58e-4217-bc68-25013283afbd",
+                            "title":  "Devoir N.2",
+                            "courseId":  "e4820497-5590-4a58-bd96-32b0bd68e7e5",
+                            "courseName":  "Vocabulaire",
+                            "classroomId":  "0c32d157-241a-4a34-9c65-6325bc4869e1",
+                            "classroomName":  "1e Primaire A",
+                            "periodId":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                            "periodName":  "Trimestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "929161c4-c6c4-488c-8b07-6af044c4e935",
+                            "title":  "interro01",
+                            "courseId":  "8d9247ba-a310-4af8-8b7d-8f8ca1c03dc4",
+                            "courseName":  "Expression Orale (c)",
+                            "classroomId":  "0c32d157-241a-4a34-9c65-6325bc4869e1",
+                            "classroomName":  "1e Primaire A",
+                            "periodId":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                            "periodName":  "Trimestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "8b150040-c9f2-4837-b01d-1687615ad274",
+                            "title":  "interro02",
+                            "courseId":  "8d9247ba-a310-4af8-8b7d-8f8ca1c03dc4",
+                            "courseName":  "Expression Orale (c)",
+                            "classroomId":  "0c32d157-241a-4a34-9c65-6325bc4869e1",
+                            "classroomName":  "1e Primaire A",
+                            "periodId":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                            "periodName":  "Trimestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "26f3dee3-1578-4eb2-94f1-a2cdbc9595d1",
+                            "title":  "interro01",
+                            "courseId":  "1aef60d3-94ed-4fb8-a8e5-b42123924bee",
+                            "courseName":  "Expression Ecrite",
+                            "classroomId":  "0c32d157-241a-4a34-9c65-6325bc4869e1",
+                            "classroomName":  "1e Primaire A",
+                            "periodId":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                            "periodName":  "Trimestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "22dac252-2eb0-404d-8365-aa556991bed7",
+                            "title":  "interro01",
+                            "courseId":  "68d5f723-af15-44bc-8979-341da336164d",
+                            "courseName":  "AlgÃ¨bre",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "6130a41b-c19e-464b-816f-67c877108b86",
+                            "title":  "interro02",
+                            "courseId":  "68d5f723-af15-44bc-8979-341da336164d",
+                            "courseName":  "AlgÃ¨bre",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "b37086a1-0861-450e-b705-b38e6b38b78d",
+                            "title":  "interro03",
+                            "courseId":  "68d5f723-af15-44bc-8979-341da336164d",
+                            "courseName":  "AlgÃ¨bre",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "fe5aec40-4eb6-42da-bc17-297a01e244ed",
+                            "title":  "devoir01",
+                            "courseId":  "68d5f723-af15-44bc-8979-341da336164d",
+                            "courseName":  "AlgÃ¨bre",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "ce20e406-1704-4ccd-821c-7ba0109e1f56",
+                            "title":  "interro1",
+                            "courseId":  "f740cda5-584d-455c-8f18-459080939851",
+                            "courseName":  "Religion",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "b8390e59-5e61-4545-91db-fdaf01a86c1f",
+                            "title":  "interro1",
+                            "courseId":  "966acc4e-a3ee-4885-8f88-d97e93c3dd9d",
+                            "courseName":  "Musique",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "ea4289fa-8869-4cbf-9636-dfd49d65f615",
+                            "title":  "interro1",
+                            "courseId":  "3abd2de0-9e58-4939-8bd0-efe0caa24331",
+                            "courseName":  "Dessin",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "72269795-a8b6-4a22-aff4-edc9f9c46806",
+                            "title":  "dev01",
+                            "courseId":  "3abd2de0-9e58-4939-8bd0-efe0caa24331",
+                            "courseName":  "Dessin",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "7b0f4e98-6197-4ecd-85f0-1ec9e2db38d6",
+                            "title":  "interro1",
+                            "courseId":  "3f76e3ef-6af6-450a-8d7d-5fc9c58fc926",
+                            "courseName":  "Educat. Phys. \u0026 sport.",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "2b6c6ef5-f591-424e-8b95-dd92009fbdb6",
+                            "title":  "interro1",
+                            "courseId":  "d7f9d798-af72-46e1-8517-b0f7f9e255c4",
+                            "courseName":  "Education Ã  la vie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "3473682f-f612-47f9-94cb-eae82200b1de",
+                            "title":  "interro2",
+                            "courseId":  "d7f9d798-af72-46e1-8517-b0f7f9e255c4",
+                            "courseName":  "Education Ã  la vie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "45a96c2f-87c6-4cb6-806b-a2c3e45baa95",
+                            "title":  "interro1",
+                            "courseId":  "5acf879c-72a6-47cf-bac6-09969a75b8ba",
+                            "courseName":  "Ed. civique et morale",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "9ea4d2ed-4a8a-40ac-8bb1-75cff65e3ac4",
+                            "title":  "interro01",
+                            "courseId":  "e089b0c3-b6e9-4a2f-ac44-2c79e4feb3a2",
+                            "courseName":  "Botanique",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "0823e298-9328-4e8a-b831-4f302eb38fb0",
+                            "title":  "interro02",
+                            "courseId":  "e089b0c3-b6e9-4a2f-ac44-2c79e4feb3a2",
+                            "courseName":  "Botanique",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "b5f1e7e5-6b79-47fe-bb88-d5150584d6e9",
+                            "title":  "int01",
+                            "courseId":  "f2a63b40-f6b1-4da8-a466-6bd981e71062",
+                            "courseName":  "ArithmÃ©tique",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "ecb48f5b-0e60-44c0-ab8b-646447baedce",
+                            "title":  "int02",
+                            "courseId":  "f2a63b40-f6b1-4da8-a466-6bd981e71062",
+                            "courseName":  "ArithmÃ©tique",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "7b9c6f1a-f057-4960-9f87-430a981e8d87",
+                            "title":  "int03",
+                            "courseId":  "f2a63b40-f6b1-4da8-a466-6bd981e71062",
+                            "courseName":  "ArithmÃ©tique",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "33fd5f2b-9679-4077-a59e-28b34978272e",
+                            "title":  "int01",
+                            "courseId":  "d5bbf27f-87cd-4b5f-8ade-ae79bca0df58",
+                            "courseName":  "Expression Orale (f)",
+                            "classroomId":  "0c32d157-241a-4a34-9c65-6325bc4869e1",
+                            "classroomName":  "1e Primaire A",
+                            "periodId":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                            "periodName":  "Trimestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "1a5ab077-4878-468b-8d8b-32611e636bbe",
+                            "title":  "interro01",
+                            "courseId":  "c48a8d66-2593-4ad1-86b3-af7d7aa86e35",
+                            "courseName":  "Mesures des grandeurs",
+                            "classroomId":  "0c32d157-241a-4a34-9c65-6325bc4869e1",
+                            "classroomName":  "1e Primaire A",
+                            "periodId":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                            "periodName":  "Trimestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "2f5d9abd-95fd-4689-ac95-498ee950eb3c",
+                            "title":  "interro01",
+                            "courseId":  "de8ea00e-6456-4a16-9e43-01f8084dac07",
+                            "courseName":  "GÃ©omÃ©trie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "05157e22-60db-4810-94a9-c0bf76254f05",
+                            "title":  "int01",
+                            "courseId":  "31f8e774-e817-428c-aedb-13544b9e562e",
+                            "courseName":  "Zoologie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "45df92a9-32b0-4bf8-b06c-01df583d6386",
+                            "title":  "int02",
+                            "courseId":  "d5bbf27f-87cd-4b5f-8ade-ae79bca0df58",
+                            "courseName":  "Expression Orale (f)",
+                            "classroomId":  "0c32d157-241a-4a34-9c65-6325bc4869e1",
+                            "classroomName":  "1e Primaire A",
+                            "periodId":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                            "periodName":  "Trimestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "2d239c61-e529-4215-9001-904495e4ca71",
+                            "title":  "interro01",
+                            "courseId":  "68d5f723-af15-44bc-8979-341da336164d",
+                            "courseName":  "AlgÃ¨bre",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "1e38ec9f-1574-4c36-8704-27819a4f484d",
+                            "periodName":  "Semestre 1 - PÃ©riode 2"
+                        },
+                        {
+                            "id":  "c5ab4189-082b-40c5-b801-45a20f085e90",
+                            "title":  "interro02",
+                            "courseId":  "68d5f723-af15-44bc-8979-341da336164d",
+                            "courseName":  "AlgÃ¨bre",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "1e38ec9f-1574-4c36-8704-27819a4f484d",
+                            "periodName":  "Semestre 1 - PÃ©riode 2"
+                        },
+                        {
+                            "id":  "7744f12c-eb0e-493e-b422-f0f2f1c71d33",
+                            "title":  "interro02",
+                            "courseId":  "de8ea00e-6456-4a16-9e43-01f8084dac07",
+                            "courseName":  "GÃ©omÃ©trie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "4d051f60-8c49-4ab7-954a-ea40d7114f71",
+                            "title":  "01",
+                            "courseId":  "65648466-33b3-4243-80fe-3e76a7f99658",
+                            "courseName":  "Anatomie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "83164697-b91f-4733-9fa9-9b5ee7823255",
+                            "title":  "02",
+                            "courseId":  "65648466-33b3-4243-80fe-3e76a7f99658",
+                            "courseName":  "Anatomie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "f05ef018-657a-4e95-82d2-9d7cf366a92c",
+                            "title":  "int gen",
+                            "courseId":  "68d5f723-af15-44bc-8979-341da336164d",
+                            "courseName":  "AlgÃ¨bre",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                            "periodName":  "Semestre 1 - PÃ©riode 1"
+                        },
+                        {
+                            "id":  "98c9080a-207c-40c7-bf1b-2143f2e8c09e",
+                            "title":  "Examen 1er Sem",
+                            "courseId":  "68d5f723-af15-44bc-8979-341da336164d",
+                            "courseName":  "AlgÃ¨bre",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "df4dbe66-c163-48a1-abf2-48a9ca75e28b",
+                            "periodName":  "Semestre 1 - Examens"
+                        },
+                        {
+                            "id":  "c2583f5d-596f-4392-9ad7-97e3bfbee4f2",
+                            "title":  "interro01",
+                            "courseId":  "65648466-33b3-4243-80fe-3e76a7f99658",
+                            "courseName":  "Anatomie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "1e38ec9f-1574-4c36-8704-27819a4f484d",
+                            "periodName":  "Semestre 1 - PÃ©riode 2"
+                        },
+                        {
+                            "id":  "9447c405-1101-414f-9622-e5a6e04cef54",
+                            "title":  "interro02",
+                            "courseId":  "65648466-33b3-4243-80fe-3e76a7f99658",
+                            "courseName":  "Anatomie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "1e38ec9f-1574-4c36-8704-27819a4f484d",
+                            "periodName":  "Semestre 1 - PÃ©riode 2"
+                        },
+                        {
+                            "id":  "9a176c86-480e-4123-96bf-f35a2e6ba36b",
+                            "title":  "int01",
+                            "courseId":  "31f8e774-e817-428c-aedb-13544b9e562e",
+                            "courseName":  "Zoologie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "1e38ec9f-1574-4c36-8704-27819a4f484d",
+                            "periodName":  "Semestre 1 - PÃ©riode 2"
+                        },
+                        {
+                            "id":  "3ce278ff-1364-44d5-98d0-6c13f99c6574",
+                            "title":  "Int01",
+                            "courseId":  "de8ea00e-6456-4a16-9e43-01f8084dac07",
+                            "courseName":  "GÃ©omÃ©trie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "1e38ec9f-1574-4c36-8704-27819a4f484d",
+                            "periodName":  "Semestre 1 - PÃ©riode 2"
+                        },
+                        {
+                            "id":  "8f340dc5-325e-47eb-b108-061fae2ee744",
+                            "title":  "Examen",
+                            "courseId":  "de8ea00e-6456-4a16-9e43-01f8084dac07",
+                            "courseName":  "GÃ©omÃ©trie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "df4dbe66-c163-48a1-abf2-48a9ca75e28b",
+                            "periodName":  "Semestre 1 - Examens"
+                        },
+                        {
+                            "id":  "59b8152e-4d76-4b85-a36a-f6acbf23dabc",
+                            "title":  "Examen",
+                            "courseId":  "65648466-33b3-4243-80fe-3e76a7f99658",
+                            "courseName":  "Anatomie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "df4dbe66-c163-48a1-abf2-48a9ca75e28b",
+                            "periodName":  "Semestre 1 - Examens"
+                        },
+                        {
+                            "id":  "2e8fb704-b175-4ec2-86fb-65e5a1db26d5",
+                            "title":  "Examen",
+                            "courseId":  "31f8e774-e817-428c-aedb-13544b9e562e",
+                            "courseName":  "Zoologie",
+                            "classroomId":  "bd6ef3f6-259d-44e2-8950-3298e9dbb378",
+                            "classroomName":  "7e CTEB A",
+                            "periodId":  "df4dbe66-c163-48a1-abf2-48a9ca75e28b",
+                            "periodName":  "Semestre 1 - Examens"
+                        },
+                        {
+                            "id":  "b795ca24-6c52-4cd7-9e53-e015123c2271",
+                            "title":  "Examen01",
+                            "courseId":  "f740cda5-584d-455c-8f18-459080939851",
+                            "courseName":  "Religion",
+                            "classroomId":  "16d1e8c6-1c90-4dc2-bdf9-203c8e9fe3bc",
+                            "classroomName":  "1ÃRE HUMANITÃ - PÃDAGOGIE GÃNÃRALE",
+                            "periodId":  "df4dbe66-c163-48a1-abf2-48a9ca75e28b",
+                            "periodName":  "Semestre 1 - Examens"
+                        }
+                    ],
+    "periods":  [
+                    {
+                        "id":  "f77c0b6f-d6a5-487a-bf3d-f720d171ee43",
+                        "name":  "Semestre 1 - PÃ©riode 1",
+                        "type":  "PERIOD",
+                        "term":  "SEM1",
+                        "level":  "SECONDAIRE",
+                        "weight":  1,
+                        "startDate":  "2025-09-05T00:00:00.000Z",
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "1e38ec9f-1574-4c36-8704-27819a4f484d",
+                        "name":  "Semestre 1 - PÃ©riode 2",
+                        "type":  "PERIOD",
+                        "term":  "SEM1",
+                        "level":  "SECONDAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "df4dbe66-c163-48a1-abf2-48a9ca75e28b",
+                        "name":  "Semestre 1 - Examens",
+                        "type":  "EXAM",
+                        "term":  "SEM1",
+                        "level":  "SECONDAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "8dd90470-0ea2-4675-b7dc-cb713f598747",
+                        "name":  "Semestre 2 - PÃ©riode 3",
+                        "type":  "PERIOD",
+                        "term":  "SEM1",
+                        "level":  "SECONDAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "4bd4a202-b2b9-4d6d-8e09-3786490ff752",
+                        "name":  "Semestre 2 - PÃ©riode 4",
+                        "type":  "PERIOD",
+                        "term":  "SEM1",
+                        "level":  "SECONDAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "1aedeea4-4cda-4ed7-b217-09382be6e253",
+                        "name":  "Semestre 2 - Examens",
+                        "type":  "EXAM",
+                        "term":  "SEM1",
+                        "level":  "SECONDAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "8544ab25-ee1d-4ff0-9bb8-1accbc28372a",
+                        "name":  "Trimestre 1 - PÃ©riode 1",
+                        "type":  "PERIOD",
+                        "term":  "TRIM1",
+                        "level":  "PRIMAIRE",
+                        "weight":  1,
+                        "startDate":  "2025-09-05T00:00:00.000Z",
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "2a7d5516-a03f-419a-8bc5-fd1cfdf7a8de",
+                        "name":  "Trimestre 1 - PÃ©riode 2",
+                        "type":  "PERIOD",
+                        "term":  "TRIM1",
+                        "level":  "PRIMAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "e9390085-48f5-4faa-b896-4106a31925d9",
+                        "name":  "Trimestre 1 - Examens",
+                        "type":  "EXAM",
+                        "term":  "TRIM1",
+                        "level":  "PRIMAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "0c2aa98f-d77a-4a9c-b719-f75bd9c38e6d",
+                        "name":  "Trimestre 2 - PÃ©riode 3",
+                        "type":  "PERIOD",
+                        "term":  "TRIM1",
+                        "level":  "PRIMAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "97954bfc-c963-4d30-8258-a30da076a128",
+                        "name":  "Trimestre 2 - PÃ©riode 4",
+                        "type":  "PERIOD",
+                        "term":  "TRIM1",
+                        "level":  "PRIMAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "35d429e0-7636-457c-a619-330531fa3a95",
+                        "name":  "Trimestre 2 - Examens",
+                        "type":  "EXAM",
+                        "term":  "TRIM1",
+                        "level":  "PRIMAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "831cdb5c-c147-4eeb-bc4b-737b5334cb8a",
+                        "name":  "Trimestre 3 - PÃ©riode 5",
+                        "type":  "PERIOD",
+                        "term":  "TRIM1",
+                        "level":  "PRIMAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "b0fee8e2-6fc9-4342-a35d-5f8b82b1c7c0",
+                        "name":  "Trimestre 3 - PÃ©riode 6",
+                        "type":  "PERIOD",
+                        "term":  "TRIM1",
+                        "level":  "PRIMAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "7fc5b127-75ca-4eba-bb69-5e385545b648",
+                        "name":  "Trimestre 3 - Examens",
+                        "type":  "EXAM",
+                        "term":  "TRIM1",
+                        "level":  "PRIMAIRE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "2cf5f8aa-8e7d-4929-aa51-6020da35eaf4",
+                        "name":  "T1",
+                        "type":  "PERIOD",
+                        "term":  "T1",
+                        "level":  "MATERNELLE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    },
+                    {
+                        "id":  "2a3a5f37-f443-4d25-8624-c730aae4fad6",
+                        "name":  "T2",
+                        "type":  "PERIOD",
+                        "term":  "T2",
+                        "level":  "MATERNELLE",
+                        "weight":  1,
+                        "startDate":  null,
+                        "endDate":  null,
+                        "schoolMatricule":  "67AM3C"
+                    }
+                ]
+}

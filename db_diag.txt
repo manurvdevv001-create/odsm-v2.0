@@ -1,0 +1,8 @@
+=== ALL GRADE SUBMISSIONS ===
+Total records: 1
+ID: 9d81692c-986e-43bf-94c5-062ebc97a75e
+  Course: Géométrie (ID: e94fd439-204e-4bac-aca2-a8b267b40eb8)
+  Class: 7e CTEB A (ID: bd6ef3f6-259d-44e2-8950-3298e9dbb378)
+  Period: Semestre 1 - Période 1 (ID: f77c0b6f-d6a5-487a-bf3d-f720d171ee43)
+  Status: SUBMITTED, Date: Wed Mar 25 2026 01:24:52 GMT+0100 (heure normale d’Afrique de l’Ouest)
+-----------------------------------

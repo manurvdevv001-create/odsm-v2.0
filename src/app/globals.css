@@ -1,0 +1,612 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@plugin "../lib/tailwindcss-animate.js";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   ODSM "Ethos Modern" Design System — by Stitch
+   North Star: "The Clarified Educator"
+   ============================================================ */
+
+:root {
+  /* ── Brand Anchors ── */
+  --color-primary-base: #468499;
+  --color-secondary-base: #708090;
+  --color-accent-base: #E8F0F2;
+
+  /* ── Stitch Surface Hierarchy (Light) ── */
+  --surface: #f8f9fb;
+  --surface-dim: #d8dadc;
+  --surface-bright: #f8f9fb;
+  --surface-container: #eceeef;
+  --surface-container-low: #f2f4f5;
+  --surface-container-high: #e7e8ea;
+  --surface-container-highest: #e1e3e4;
+  --surface-container-lowest: #ffffff;
+
+  /* ── Primary: Teal #468499 → Stitch-refined ── */
+  --primary: 194 37% 44%;
+  --primary-foreground: 0 0% 100%;
+
+  /* ── Secondary: Muted Slate ── */
+  --secondary: 200 15% 36%;
+  --secondary-foreground: 0 0% 100%;
+
+  /* ── Accent: Tonal Teal Surface ── */
+  --accent: 192 23% 93%;
+  --accent-foreground: 210 15% 20%;
+
+  --background: 210 14% 98%;
+  --foreground: 200 11% 10%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 200 11% 10%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 200 11% 10%;
+
+  --muted: 210 12% 96%;
+  --muted-foreground: 200 8% 43%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 200 12% 91%;
+  --input: 200 12% 91%;
+  --ring: 194 37% 44%;
+
+  --radius: 0.625rem;
+
+  --chart-1: 194 37% 44%;
+  --chart-2: 160 40% 50%;
+  --chart-3: 210 13% 50%;
+  --chart-4: 45 80% 55%;
+  --chart-5: 330 50% 55%;
+
+  --sidebar: 0 0% 99%;
+  --sidebar-foreground: 210 15% 15%;
+  --sidebar-primary: 194 37% 44%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 192 23% 93%;
+  --sidebar-accent-foreground: 210 15% 20%;
+  --sidebar-border: 210 15% 90%;
+  --sidebar-ring: 194 37% 44%;
+
+  /* ── Stitch Extras ── */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-shadow: 0 8px 32px rgba(25, 28, 29, 0.04), 0 4px 8px rgba(25, 28, 29, 0.06);
+  --gradient-primary: linear-gradient(135deg, hsl(194 37% 44%), hsl(194 30% 52%));
+  --bottom-nav-height: 5rem;
+}
+
+/* ── Comprehensive Dark Mode (Stitch "Ethos Modern") ── */
+.dark {
+  --surface: #0f1419;
+  --surface-dim: #0f1419;
+  --surface-bright: #353a3d;
+  --surface-container: #1a2332;
+  --surface-container-low: #151c25;
+  --surface-container-high: #212b38;
+  --surface-container-highest: #2c3640;
+  --surface-container-lowest: #0a0f14;
+
+  --background: 212 28% 8%;
+  --foreground: 210 10% 93%;
+
+  --card: 212 28% 11%;
+  --card-foreground: 210 10% 93%;
+
+  --popover: 212 28% 11%;
+  --popover-foreground: 210 10% 93%;
+
+  --primary: 194 42% 58%;
+  --primary-foreground: 210 28% 8%;
+
+  --secondary: 200 15% 28%;
+  --secondary-foreground: 210 10% 90%;
+
+  --accent: 212 25% 16%;
+  --accent-foreground: 210 10% 90%;
+
+  --muted: 212 22% 16%;
+  --muted-foreground: 200 8% 58%;
+
+  --destructive: 0 65% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 212 20% 18%;
+  --input: 212 20% 20%;
+  --ring: 194 42% 58%;
+
+  --glass-bg: rgba(26, 35, 50, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 4px 8px rgba(0, 0, 0, 0.15);
+  --gradient-primary: linear-gradient(135deg, hsl(194 42% 48%), hsl(194 35% 56%));
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* ============================================================
+   Stitch "Ethos Modern" — Utilities
+   ============================================================ */
+
+/* ── Glassmorphism Card ── */
+@utility glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* ── Glass Card Hover (lift effect) ── */
+@utility glass-card-hover {
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(25, 28, 29, 0.06), 0 6px 12px rgba(25, 28, 29, 0.08);
+  }
+}
+
+/* ── Floating Navigation Dock ── */
+@utility glass-dock {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.06), 0 -1px 6px rgba(0, 0, 0, 0.04);
+  border-radius: 1.5rem;
+}
+
+/* ── Gradient Primary Button ── */
+@utility gradient-btn {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 14px rgba(70, 132, 153, 0.25);
+  transition: all 0.3s ease;
+  &:hover {
+    box-shadow: 0 6px 20px rgba(70, 132, 153, 0.35);
+    filter: brightness(1.05);
+  }
+}
+
+/* ── Tonal Surface (No-border card alternative) ── */
+@utility tonal-surface {
+  background: var(--surface-container-lowest);
+  border-radius: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+@utility tonal-surface-raised {
+  background: var(--surface-container);
+  border-radius: 0.75rem;
+}
+
+/* ── Stitch Stat Card ── */
+@utility stat-card {
+  background: var(--surface-container-lowest);
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* ── Legacy compat ── */
+@utility neuglass-card {
+  @apply glass-card;
+}
+
+@utility neuglass-btn {
+  @apply gradient-btn;
+}
+
+/* ── Full Neuglass System (Reproduced from odsm-app) ── */
+
+@utility neuglass-bg {
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(249, 115, 22, 0.06) 0%, transparent 50%),
+    linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+}
+
+@utility neuglass-btn-primary {
+  background: linear-gradient(145deg, #3b82f6, #2563eb);
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow:
+    4px 4px 12px rgba(0, 0, 0, 0.35),
+    -2px -2px 8px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  &:hover {
+    background: linear-gradient(145deg, #60a5fa, #3b82f6);
+    box-shadow:
+      2px 2px 8px rgba(0, 0, 0, 0.3),
+      -1px -1px 6px rgba(255, 255, 255, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 0 20px rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow:
+      inset 2px 2px 6px rgba(0, 0, 0, 0.3),
+      inset -1px -1px 4px rgba(255, 255, 255, 0.05);
+  }
+}
+
+@utility neuglass-btn-secondary {
+  background: linear-gradient(145deg, #f97316, #ea580c);
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow:
+    4px 4px 12px rgba(0, 0, 0, 0.35),
+    -2px -2px 8px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.2s ease;
+  &:hover {
+    background: linear-gradient(145deg, #fb923c, #f97316);
+    box-shadow:
+      2px 2px 8px rgba(0, 0, 0, 0.3),
+      0 0 20px rgba(249, 115, 22, 0.3);
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow:
+      inset 2px 2px 6px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@utility neuglass-btn-ghost {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  box-shadow:
+    3px 3px 10px rgba(0, 0, 0, 0.25),
+    -2px -2px 8px rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+  &:hover {
+    background: rgba(51, 65, 85, 0.6);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+      2px 2px 8px rgba(0, 0, 0, 0.2),
+      0 0 12px rgba(255, 255, 255, 0.05);
+  }
+}
+
+@utility neuglass-input {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+  box-shadow:
+    inset 4px 4px 10px rgba(0, 0, 0, 0.35),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+  &:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow:
+      inset 3px 3px 8px rgba(0, 0, 0, 0.3),
+      inset -1px -1px 4px rgba(255, 255, 255, 0.03),
+      0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+}
+
+@utility neuglass-input-orange {
+  &:focus {
+    border-color: rgba(249, 115, 22, 0.5);
+    box-shadow:
+      inset 3px 3px 8px rgba(0, 0, 0, 0.3),
+      inset -1px -1px 4px rgba(255, 255, 255, 0.03),
+      0 0 0 3px rgba(249, 115, 22, 0.15);
+  }
+}
+
+@utility neuglass-stat {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  box-shadow:
+    5px 5px 15px rgba(0, 0, 0, 0.3),
+    -3px -3px 10px rgba(255, 255, 255, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: all 0.25s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      7px 7px 20px rgba(0, 0, 0, 0.35),
+      -4px -4px 12px rgba(255, 255, 255, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+}
+
+@utility neuglass-stat-success {
+  background: rgba(34, 197, 94, 0.05);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+  box-shadow:
+    5px 5px 15px rgba(0, 0, 0, 0.3),
+    -3px -3px 10px rgba(34, 197, 94, 0.02),
+    inset 0 0 30px rgba(34, 197, 94, 0.03);
+}
+
+@utility neuglass-empty {
+  background: rgba(30, 41, 59, 0.3);
+  backdrop-filter: blur(8px);
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+}
+
+@utility neuglass-badge {
+  background: rgba(59, 130, 246, 0.15);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+@utility neuglass-divider {
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* ── Ethos Modern (Dark Neuglass System) ── */
+
+@utility ethos-dark-bg {
+  background-color: #020617;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
+}
+
+@utility ethos-card {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.02);
+  border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  &:hover {
+    background: rgba(15, 23, 42, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
+  }
+}
+
+@utility ethos-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+@utility ethos-btn-secondary {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+}
+
+@utility ethos-stat-card {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+/* ── Neuglass Light System (Keep for fallback/specific use) ── */
+
+
+/* ── Mobile Bottom Nav Padding ── */
+@utility pb-dock {
+  padding-bottom: calc(var(--bottom-nav-height) + 1rem);
+}
+
+/* ── No Scrollbar Utility ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Smooth theme switch ── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 0ms;
+}
+body, body * {
+  transition-duration: 0ms;
+}
+.theme-transition, .theme-transition * {
+  transition-duration: 300ms !important;
+  transition-timing-function: ease !important;
+}
+
+/* ── Tonal Table Rows (alternating without borders) ── */
+.tonal-table tbody tr:nth-child(even) {
+  background: var(--surface-container-low);
+}
+.tonal-table tbody tr:nth-child(odd) {
+  background: var(--surface-container-lowest);
+}
+.tonal-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+.tonal-table tbody tr:hover {
+  background: var(--surface-container-high) !important;
+}
+
+/* ── Dark mode: table sticky columns ── */
+.dark .sticky-col-bg {
+  background: var(--surface-container) !important;
+}
+
+/* ============================================================
+   ODSM Print Styles for Academic Bulletins
+   ============================================================ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+  
+  html, body {
+    background: white !important;
+    color: black !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    -moz-print-color-adjust: exact;
+  }
+
+  /* Hide the main UI layouts when printing a bulletin */
+  .hide-on-print {
+    display: none !important;
+  }
+
+  /* Force layout to not hide the printable area */
+  body.printing-mode * {
+    visibility: hidden;
+  }
+  body.printing-mode .printable-area, 
+  body.printing-mode .printable-area * {
+    visibility: visible;
+  }
+  body.printing-mode .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  /* Specific rule for the bulletin container */
+  .bulletin-page {
+    page-break-after: always;
+    page-break-inside: avoid;
+    break-after: page;
+    break-inside: avoid;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    box-shadow: none !important;
+    border: none !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bulletin-page:last-of-type {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .print-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.05 !important;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Table styling matching MINEDUC */
+  .bulletin-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 11px;
+    z-index: 10;
+    position: relative;
+    background: transparent;
+  }
+  
+  .bulletin-table th, .bulletin-table td {
+    border: 1px solid black !important;
+    padding: 3px 5px !important;
+    color: black !important;
+  }
+}

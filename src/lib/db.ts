@@ -22,19 +22,17 @@ const prismaClientSingleton = () => {
     }
     
     // 2. Mode LOCAL (Votre PC) : On garde better-sqlite3
-    const Database = require('better-sqlite3');
     const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
     let resolvedUrl = process.env.DATABASE_URL || 'file:./dev.db';
     
     if (resolvedUrl.startsWith('file:')) {
         const dbRelativePath = resolvedUrl.replace('file:', '');
         const absoluteDbPath = path.resolve(process.cwd(), dbRelativePath);
-        resolvedUrl = absoluteDbPath;
+        resolvedUrl = `file:${absoluteDbPath.replace(/\\/g, '/')}`;
     }
     
     console.log('[ODSM DB] Connecté en Local:', resolvedUrl);
-    const sqlite = new Database(resolvedUrl);
-    const adapter = new PrismaBetterSqlite3(sqlite);
+    const adapter = new PrismaBetterSqlite3({ url: resolvedUrl });
     return new PrismaClient({ adapter });
 }
 

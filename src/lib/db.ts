@@ -16,19 +16,25 @@ const prismaClientSingleton = () => {
         console.log('[ODSM DB] Connecté à Turso (Cloud SQLite) 🚀');
         return new PrismaClient({ adapter });
     } 
+    // Sécurité : Sur Vercel/Netlify, on ne DOIT PAS utiliser le mode local
+    if (process.env.NODE_ENV === 'production' && !process.env.TURSO_DATABASE_URL) {
+        throw new Error("⚠️ VARIABLES D'ENVIRONNEMENT MANQUANTES : TURSO_DATABASE_URL et TURSO_AUTH_TOKEN ne sont pas configurées sur Netlify.");
+    }
     
     // 2. Mode LOCAL (Votre PC) : On garde better-sqlite3
+    const Database = require('better-sqlite3');
     const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
     let resolvedUrl = process.env.DATABASE_URL || 'file:./dev.db';
     
     if (resolvedUrl.startsWith('file:')) {
         const dbRelativePath = resolvedUrl.replace('file:', '');
         const absoluteDbPath = path.resolve(process.cwd(), dbRelativePath);
-        resolvedUrl = `file:${absoluteDbPath.replace(/\\/g, '/')}`;
+        resolvedUrl = absoluteDbPath;
     }
     
     console.log('[ODSM DB] Connecté en Local:', resolvedUrl);
-    const adapter = new PrismaBetterSqlite3({ url: resolvedUrl });
+    const sqlite = new Database(resolvedUrl);
+    const adapter = new PrismaBetterSqlite3(sqlite);
     return new PrismaClient({ adapter });
 }
 

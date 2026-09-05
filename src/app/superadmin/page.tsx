@@ -188,7 +188,8 @@ export default function SuperadminDashboard() {
 
     async function handleLogout() {
         await logoutSuperadmin();
-        router.push('/superadmin/login');
+        // Force hard reload to clear any cached session state (important sur Netlify)
+        window.location.href = '/superadmin/login';
     }
 
     async function handleAction(action: string, school: any) {

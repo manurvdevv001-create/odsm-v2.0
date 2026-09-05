@@ -644,36 +644,42 @@ export async function getSystemMetrics() {
 
     try {
         const os = require('os');
-        const fs = require('fs');
-        const path = require('path');
 
         const totalMem = os.totalmem();
         const freeMem = os.freemem();
         const usedMem = totalMem - freeMem;
         const memPercentage = ((usedMem / totalMem) * 100).toFixed(1);
 
-        const cpus = os.cpus();
-        const cpuModel = cpus[0].model;
-        const cpuCount = cpus.length;
+        // os.cpus() peut retourner un tableau vide dans certains environnements cloud
+        const cpus = os.cpus() || [];
+        const cpuModel = cpus.length > 0 ? cpus[0]?.model : 'Cloud (N/A)';
+        const cpuCount = cpus.length || 1;
         const loadAvg = os.loadavg();
 
-        // Resolve DB Path like db.ts does
-        const dbUrl = process.env.DATABASE_URL || 'file:./dev.db';
-        const dbRelativePath = dbUrl.replace('file:', '');
-        const dbPath = path.isAbsolute(dbRelativePath) 
-            ? dbRelativePath 
-            : path.join(process.cwd(), dbRelativePath);
-
+        // Taille de la DB : seulement disponible en local (pas sur Netlify)
         let dbSize = 0;
-        if (fs.existsSync(dbPath)) {
-            dbSize = fs.statSync(dbPath).size;
+        const isCloud = !!process.env.TURSO_DATABASE_URL;
+        
+        if (!isCloud) {
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const dbUrl = process.env.DATABASE_URL || 'file:./dev.db';
+                const dbRelativePath = dbUrl.replace('file:', '');
+                const dbPath = path.isAbsolute(dbRelativePath)
+                    ? dbRelativePath
+                    : path.join(process.cwd(), dbRelativePath);
+                if (fs.existsSync(dbPath)) {
+                    dbSize = fs.statSync(dbPath).size;
+                }
+            } catch (_) { /* ignore en mode cloud */ }
         }
 
         let dbStatus = 'Disconnected';
         let schoolCount = 0;
         try {
             await prisma.$queryRaw`SELECT 1`;
-            dbStatus = 'Connected';
+            dbStatus = isCloud ? 'Connected (Turso Cloud)' : 'Connected (Local)';
             schoolCount = await prisma.school.count();
         } catch (e: any) {
             dbStatus = 'Error: ' + e.message;
@@ -690,11 +696,11 @@ export async function getSystemMetrics() {
                 cpu: {
                     model: cpuModel,
                     count: cpuCount,
-                    load: loadAvg[0].toFixed(2)
+                    load: loadAvg[0]?.toFixed(2) ?? '0.00'
                 },
                 storage: {
-                    dbSize: (dbSize / (1024 * 1024)).toFixed(2) + ' MB',
-                    dbPath: dbPath,
+                    dbSize: isCloud ? 'Turso Cloud' : (dbSize / (1024 * 1024)).toFixed(2) + ' MB',
+                    dbPath: isCloud ? 'Turso Cloud Database' : 'Local dev.db',
                     dbStatus: dbStatus,
                     schoolCount: schoolCount
                 },

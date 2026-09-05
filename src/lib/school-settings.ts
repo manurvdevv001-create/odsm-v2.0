@@ -49,6 +49,13 @@ async function ensureSchoolYearSettingsTable() {
         return;
     }
 
+    // Sur Turso (cloud), la table a déjà été créée via baseline.sql.
+    // sqlite_master n'existe pas sur Turso, on court-circuite la vérification.
+    if (process.env.TURSO_DATABASE_URL) {
+        schoolYearSettingsTableInitialized = true;
+        return;
+    }
+
     try {
         const result: any = await db.$queryRaw`SELECT count(name) as count FROM sqlite_master WHERE type='table' AND name='SchoolYearSettings';`;
         const count = Array.isArray(result) && result.length > 0 ? (result[0]?.count ?? 0) : 0;
@@ -88,6 +95,7 @@ async function ensureSchoolYearSettingsTable() {
         console.error('[SchoolSettings] Failed to ensure SchoolYearSettings table exists:', error);
         throw error;
     }
+
 }
 
 export async function getActiveYearForSchool(matricule: string): Promise<string | null> {

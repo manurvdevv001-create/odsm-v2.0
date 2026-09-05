@@ -1,0 +1,4 @@
+[build]
+  # Génère le client Prisma avant le build Next.js
+  command = "npx prisma generate && npm run build"
+  publish = ".next"

@@ -3,16 +3,16 @@ import { PrismaClient } from '@prisma/client';
 import path from 'path';
 
 const prismaClientSingleton = () => {
-    // 1. Mode CLOUD (Vercel) : Si les identifiants Turso sont détectés
+    // 1. Mode CLOUD (Vercel/Netlify) : Si les identifiants Turso sont détectés
     if (process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN) {
         const { createClient } = require('@libsql/client');
-        const { PrismaLibSQL } = require('@prisma/adapter-libsql');
+        const { PrismaLibSql } = require('@prisma/adapter-libsql');
         
         const libsql = createClient({
             url: process.env.TURSO_DATABASE_URL,
             authToken: process.env.TURSO_AUTH_TOKEN,
         });
-        const adapter = new PrismaLibSQL(libsql);
+        const adapter = new PrismaLibSql(libsql);
         console.log('[ODSM DB] Connecté à Turso (Cloud SQLite) 🚀');
         return new PrismaClient({ adapter });
     } 

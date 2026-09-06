@@ -4,7 +4,10 @@ import path from 'path';
 
 const prismaClientSingleton = () => {
     // 1. Mode CLOUD (Vercel/Netlify) : Si les identifiants Turso sont détectés
-    if (process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN) {
+    const isCloud = process.env.TURSO_DATABASE_URL && process.env.TURSO_DATABASE_URL !== 'undefined' 
+                 && process.env.TURSO_AUTH_TOKEN && process.env.TURSO_AUTH_TOKEN !== 'undefined';
+
+    if (isCloud) {
         const { createClient } = require('@libsql/client');
         const { PrismaLibSql } = require('@prisma/adapter-libsql');
         
@@ -17,8 +20,8 @@ const prismaClientSingleton = () => {
         return new PrismaClient({ adapter });
     } 
     // Sécurité : Sur Vercel/Netlify, on ne DOIT PAS utiliser le mode local
-    if (process.env.NODE_ENV === 'production' && !process.env.TURSO_DATABASE_URL) {
-        throw new Error("⚠️ VARIABLES D'ENVIRONNEMENT MANQUANTES : TURSO_DATABASE_URL et TURSO_AUTH_TOKEN ne sont pas configurées sur Netlify.");
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error("⚠️ VARIABLES D'ENVIRONNEMENT INVALIDES : TURSO_DATABASE_URL et/ou TURSO_AUTH_TOKEN sont manquantes ou égales à 'undefined' sur Netlify. Veuillez vérifier la configuration de votre site 'odsm-v2-test'.");
     }
     
     // 2. Mode LOCAL (Votre PC) : On garde better-sqlite3

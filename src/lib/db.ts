@@ -8,14 +8,14 @@ const prismaClientSingleton = () => {
                  && process.env.TURSO_AUTH_TOKEN && process.env.TURSO_AUTH_TOKEN !== 'undefined';
 
     if (isCloud) {
-        const { createClient } = require('@libsql/client');
         const { PrismaLibSql } = require('@prisma/adapter-libsql');
         
-        const libsql = createClient({
+        // Prisma v7: adapter-libsql takes the config directly, not a client instance
+        const adapter = new PrismaLibSql({
             url: process.env.TURSO_DATABASE_URL,
             authToken: process.env.TURSO_AUTH_TOKEN,
         });
-        const adapter = new PrismaLibSql(libsql);
+        
         console.log('[ODSM DB] Connecté à Turso (Cloud SQLite) 🚀');
         return new PrismaClient({ adapter });
     } 

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Eye, EyeOff, LogIn, ShieldAlert } from "lucide-react";
+import { Loader2, Eye, EyeOff, LogIn, ShieldAlert, ShieldX } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { verifyLogin } from "./actions";
@@ -34,6 +34,13 @@ export default function LoginPage() {
             toast.error("Accès restreint", {
                 description: "Votre compte n'est pas autorisé à accéder au système en dehors des heures de service configurées.",
                 duration: 6000
+            });
+        }
+        if (error === "license_suspended") {
+            toast.error("Accès bloqué — Licence invalide", {
+                description: "La licence de votre établissement a expiré ou a été suspendue. Veuillez contacter l'administration ODSM pour régulariser votre situation.",
+                duration: 10000,
+                icon: <ShieldX className="h-5 w-5 text-red-500" />,
             });
         }
     }, [searchParams]);

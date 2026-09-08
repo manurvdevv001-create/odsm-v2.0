@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { setSession } from "@/lib/auth";
+import { checkLicense } from "@/lib/license-check";
 
 export async function verifyLogin(
     matricule: string,
@@ -46,6 +47,12 @@ export async function verifyLogin(
         // 1. Connexion Admin principal (pas de nom d'utilisateur)
         if (!username) {
             if (comparePasswords(passwordAttempt, school.password)) {
+                // Vérifier la validité de la licence avant d'ouvrir la session
+                const licenseStatus = await checkLicense(matricule.trim());
+                if (!licenseStatus.isValid) {
+                    return { success: false, error: licenseStatus.message || "Licence invalide. Contactez l'administration ODSM." };
+                }
+
                 await setSession({
                     userId: "admin",
                     matricule: school.matricule,
@@ -130,6 +137,12 @@ export async function verifyLogin(
                 });
             }
 
+            // Vérifier la validité de la licence avant d'ouvrir la session
+            const licenseStatus = await checkLicense(matricule.trim());
+            if (!licenseStatus.isValid) {
+                return { success: false, error: licenseStatus.message || "Licence invalide. Contactez l'administration ODSM." };
+            }
+
             await setSession({
                 userId: user.id,
                 matricule: school.matricule,
@@ -197,6 +210,12 @@ export async function verify2FAAction(
     const isValid = await verify2FACode(code, user.twoFactorSecret);
 
     if (isValid) {
+        // Vérifier la validité de la licence avant d'ouvrir la session
+        const licenseStatus = await checkLicense(matricule);
+        if (!licenseStatus.isValid) {
+            return { success: false, error: licenseStatus.message || "Licence invalide. Contactez l'administration ODSM." };
+        }
+
         await setSession({
             userId: user.id,
             matricule: school.matricule,

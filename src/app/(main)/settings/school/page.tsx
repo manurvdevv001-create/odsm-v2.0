@@ -1,6 +1,7 @@
 "use client";
 
 import { useSchoolData } from "@/components/providers/SchoolDataProvider";
+import { useLicense } from "@/components/providers/LicenseProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,10 @@ import {
     XCircle,
     ArrowLeft,
     Globe,
-    Building2
+    Building2,
+    ShieldCheck,
+    CalendarDays,
+    Clock,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -23,6 +27,7 @@ import { getClassroomsByLevel } from "@/lib/classroom-utils";
 
 export default function SchoolInfoPage() {
     const { schoolData, isLoading } = useSchoolData();
+    const { license, daysLeft, isExpiringSoon } = useLicense();
 
     if (isLoading) {
         return (
@@ -154,6 +159,95 @@ export default function SchoolInfoPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Licence Active */}
+            {license && (
+                <Card className="border-none shadow-lg overflow-hidden">
+                    <CardHeader className="bg-primary/5 border-b border-primary/10">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <ShieldCheck className="h-5 w-5 text-primary" />
+                            Licence Active
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                            {/* Type */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                                    <ShieldCheck className="h-3 w-3" />
+                                    Type de licence
+                                </label>
+                                <p className="text-sm font-semibold">
+                                    {license.customName || license.type}
+                                </p>
+                            </div>
+
+                            {/* Statut */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                                    <ShieldCheck className="h-3 w-3" />
+                                    Statut
+                                </label>
+                                <Badge
+                                    variant="outline"
+                                    className={
+                                        license.status === "ACTIVE"
+                                            ? "bg-green-50 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400"
+                                            : "bg-red-50 text-red-700 border-red-300 dark:bg-red-900/20 dark:text-red-400"
+                                    }
+                                >
+                                    {license.status === "ACTIVE" ? "Active" : license.status}
+                                </Badge>
+                            </div>
+
+                            {/* Date début */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                                    <CalendarDays className="h-3 w-3" />
+                                    Date de début
+                                </label>
+                                <p className="text-sm font-medium">
+                                    {new Date(license.startDate).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                                </p>
+                            </div>
+
+                            {/* Date fin */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                                    <CalendarDays className="h-3 w-3" />
+                                    Date d&apos;expiration
+                                </label>
+                                <p className="text-sm font-medium">
+                                    {new Date(license.endDate).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Days remaining highlight */}
+                        <div className="mt-5 pt-5 border-t border-border/50">
+                            <div className={`inline-flex items-center gap-3 px-4 py-3 rounded-xl border ${
+                                isExpiringSoon
+                                    ? "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800/40"
+                                    : "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800/40"
+                            }`}>
+                                <Clock className={`h-5 w-5 ${isExpiringSoon ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`} />
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Jours restants</p>
+                                    <p className={`text-2xl font-black leading-none ${isExpiringSoon ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
+                                        {daysLeft !== null ? daysLeft : "—"}
+                                        <span className="text-sm font-normal text-muted-foreground ml-1.5">jours</span>
+                                    </p>
+                                </div>
+                                {isExpiringSoon && (
+                                    <p className="text-xs text-red-600 dark:text-red-400 font-semibold ml-2">
+                                        Renouvellement urgent recommandé.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Footer / Meta */}
             <p className="text-center text-xs text-muted-foreground opacity-50">

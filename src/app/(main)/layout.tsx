@@ -3,6 +3,8 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { SessionGuard } from "@/components/SessionGuard";
 import { SchoolDataProvider } from "@/components/providers/SchoolDataProvider";
 import { StudentDisplayProvider } from "@/components/providers/StudentDisplayProvider";
+import { LicenseProvider } from "@/components/providers/LicenseProvider";
+import { LicenseRibbon } from "@/components/LicenseRibbon";
 import { Footer } from "@/components/Footer";
 
 import { checkLicense } from "@/lib/license-check";
@@ -42,20 +44,23 @@ export default async function DashboardLayout({
     }
 
     return (
-        <SchoolDataProvider>
-            <StudentDisplayProvider>
-                <div className="flex min-h-screen flex-col bg-background">
-                    <Header />
-                    <main className="flex-1">
-                        <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-                            {children}
-                        </div>
-                    </main>
-                    <Footer />
-                    <ScrollToTop />
-                    <SessionGuard />
-                </div>
-            </StudentDisplayProvider>
-        </SchoolDataProvider>
+        <LicenseProvider>
+            <SchoolDataProvider>
+                <StudentDisplayProvider>
+                    <div className="flex min-h-screen flex-col bg-background">
+                        <Header />
+                        <LicenseRibbon />
+                        <main className="flex-1">
+                            <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+                                {children}
+                            </div>
+                        </main>
+                        <Footer />
+                        <ScrollToTop />
+                        <SessionGuard />
+                    </div>
+                </StudentDisplayProvider>
+            </SchoolDataProvider>
+        </LicenseProvider>
     );
 }

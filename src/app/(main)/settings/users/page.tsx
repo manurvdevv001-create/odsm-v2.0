@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, UserCog, ShieldCheck, ShieldAlert, UserCheck, User, Users, Scale, GraduationCap, LayoutDashboard, Loader2, LogOut, Power } from 'lucide-react';
+import { Plus, Pencil, Trash2, UserCog, ShieldCheck, ShieldAlert, UserCheck, User, Users, Scale, LayoutDashboard, Loader2, Power, type LucideIcon } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { getUsers, createUser, deleteUser, updateUserManagementConfig } from './actions';
+import { getUsers, deleteUser, updateUserManagementConfig } from './actions';
 import { forceTerminateSession } from './session-actions';
 import { useSchoolData } from "@/components/providers/SchoolDataProvider";
 import { isReadOnlyRole } from "@/lib/role-permissions";
@@ -20,14 +20,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { UserForm } from '@/components/user-form';
 import { Badge } from '@/components/ui/badge';
 import {
     AlertDialog,
@@ -49,7 +41,23 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-const roleLabels: Record<string, { label: string; color: string; icon: any }> = {
+type UserRow = {
+    id: string;
+    name: string;
+    login: string;
+    role: string;
+    staffId?: string;
+    lastLoginAt?: string;
+    lastLogoutAt?: string;
+    lastSessionDuration?: number;
+    isSessionActive?: boolean;
+    createdAt?: string;
+    sessionTimeoutMinutes?: number;
+    accessSchedule?: { start: string; end: string; days: number[] };
+    multipleSessionsEnabled?: boolean;
+};
+
+const roleLabels: Record<string, { label: string; color: string; icon: LucideIcon }> = {
     ADMIN_SYSTEM: { label: 'Admin Système', color: 'bg-red-500/10 text-red-500 border-red-500/20', icon: ShieldAlert },
     SUPERVISOR: { label: 'Superviseur', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', icon: ShieldCheck },
     CASHIER: { label: 'Percepteur', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', icon: UserCheck },
@@ -100,26 +108,18 @@ function formatElapsed(isoDate?: string): string {
 export default function UsersPage() {
     const router = useRouter();
     const { schoolData } = useSchoolData();
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<UserRow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [deletingUser, setDeletingUser] = useState<any>(null);
-    const [terminatingUser, setTerminatingUser] = useState<any>(null);
+    const [deletingUser, setDeletingUser] = useState<UserRow | null>(null);
+    const [terminatingUser, setTerminatingUser] = useState<UserRow | null>(null);
     const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [pendingConfigChecked, setPendingConfigChecked] = useState(false);
 
-    const useStaffNumberAsLogin = (schoolData?.configuration as any)?.userManagement?.useStaffNumberAsLogin || false;
+    const useStaffNumberAsLogin = (schoolData?.configuration as { userManagement?: { useStaffNumberAsLogin?: boolean } } | undefined)?.userManagement?.useStaffNumberAsLogin ?? false;
     const staffProfiles = schoolData?.teachers || [];
     const effectiveRole = ((useSchoolData().user?.role as string) || 'ADMIN').toUpperCase();
     const readOnly = isReadOnlyRole(effectiveRole);
-
-    useEffect(() => {
-        if (schoolData?.matricule) {
-            loadUsers();
-        }
-    }, [schoolData?.matricule]);
 
     const loadUsers = async () => {
         if (!schoolData?.matricule) return;
@@ -129,26 +129,11 @@ export default function UsersPage() {
         setIsLoading(false);
     };
 
-    const handleCreate = async (formData: any) => {
-        if (!schoolData?.matricule) return;
-        setIsSubmitting(true);
-        const matricule = schoolData.matricule as string;
-
-        const result = await createUser(matricule, formData);
-
-        if (result?.success) {
-            toast.success("Compte créé", {
-                description: `L'accès pour ${formData.name} a été configuré.`,
-            });
-            setIsDialogOpen(false);
+    useEffect(() => {
+        if (schoolData?.matricule) {
             loadUsers();
-        } else {
-            toast.error("Erreur", {
-                description: result?.error || "Échec de l'opération.",
-            });
         }
-        setIsSubmitting(false);
-    };
+    }, [schoolData?.matricule]);
 
     const handleDelete = async () => {
         if (!deletingUser || !schoolData?.matricule) return;
@@ -245,7 +230,7 @@ export default function UsersPage() {
                                 </Label>
                             </div>
                             <Button 
-                                onClick={() => setIsDialogOpen(true)} 
+                                onClick={() => router.push('/settings/users/new')} 
                                 className="gradient-btn h-11 px-6 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                             >
                                 <Plus className="mr-2 h-5 w-5" /> Créer un accès
@@ -305,7 +290,7 @@ export default function UsersPage() {
                                                 <div className="flex flex-col items-center gap-3 text-slate-400">
                                                     <UserCog className="h-12 w-12 opacity-20" />
                                                     <p className="font-medium">Aucun compte utilisateur configuré.</p>
-                                                    <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(true)}>
+                                                    <Button variant="outline" size="sm" onClick={() => router.push('/settings/users/new')}>
                                                         Créer le premier accès
                                                     </Button>
                                                 </div>
@@ -316,7 +301,7 @@ export default function UsersPage() {
                                             {users.map((user, idx) => {
                                                 const roleCfg = roleLabels[user.role] || { label: user.role, color: 'bg-slate-100 text-slate-600', icon: User };
                                                 const RoleIcon = roleCfg.icon;
-                                                const linkedStaff = staffProfiles.find((s: any) => s.id === user.staffId);
+                                                const linkedStaff = staffProfiles.find((s: { id?: string }) => s.id === user.staffId);
 
                                                 return (
                                                     <motion.tr 
@@ -438,26 +423,6 @@ export default function UsersPage() {
                     </ScrollArea>
                 </CardContent>
             </Card>
-
-            {/* CREATE DIALOG (only for creation, not edit) */}
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-[500px] border-none shadow-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold">Créer un accès</DialogTitle>
-                        <DialogDescription>
-                            Configurez les identifiants et les permissions pour un membre du personnel.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <UserForm
-                        staffProfiles={staffProfiles}
-                        onSubmit={handleCreate}
-                        onCancel={() => setIsDialogOpen(false)}
-                        isSubmitting={isSubmitting}
-                        useStaffNumberAsLogin={useStaffNumberAsLogin}
-                        mode="create"
-                    />
-                </DialogContent>
-            </Dialog>
 
             {/* DELETE ALERT */}
             <AlertDialog open={!!deletingUser} onOpenChange={(open) => !open && setDeletingUser(null)}>

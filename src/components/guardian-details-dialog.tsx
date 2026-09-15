@@ -223,7 +223,7 @@ export const GuardianDetailsDialog = ({ guardian, schoolData, isOpen, onClose }:
     return (
         <>
             <Card className="fixed inset-0 z-40 overflow-auto bg-background/80 flex items-center justify-center p-4 backdrop-blur-sm">
-                <Card className="w-full max-w-3xl relative z-50">
+                <Card className="w-full max-w-3xl relative z-50 max-h-[90dvh] overflow-y-auto">
                     <CardHeader className="border-b bg-muted/20">
                         <div className="flex justify-between items-start">
                             <div>

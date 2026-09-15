@@ -22,7 +22,8 @@ import {
     Gavel,
     Settings,
     Plus,
-    Trash2
+    Trash2,
+    BarChart3
 } from "lucide-react";
 import {
     Select,
@@ -308,8 +309,8 @@ export default function PeriodMonitoringPage() {
                     Retour
                 </Button>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex-1">
                         <h1 className="text-3xl font-headline font-bold text-foreground flex items-center gap-3">
                             <div className="neuglass-light-icon p-2 rounded-xl bg-primary/10">
                                 <Shield className="h-7 w-7 text-primary" />
@@ -339,7 +340,37 @@ export default function PeriodMonitoringPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex flex-wrap justify-center items-center gap-2">
+                        <Button
+                            variant="default"
+                            size="sm"
+                            className="h-9 rounded-xl font-bold gap-2"
+                            onClick={() => {
+                                if (displayPeriod?.id) {
+                                    router.push(`/classrooms/${encodeURIComponent(classroomName)}/evaluations/monitoring/stats?mode=general&periodId=${displayPeriod.id}`);
+                                } else {
+                                    toast.error("Veuillez sélectionner une période d'abord.");
+                                }
+                            }}
+                        >
+                            <BarChart3 className="h-4 w-4" />
+                            Stats Générales
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-9 rounded-xl font-bold gap-2 bg-primary/10 text-primary hover:bg-primary/20"
+                            onClick={() => {
+                                router.push(`/classrooms/${encodeURIComponent(classroomName)}/evaluations/monitoring/stats?mode=cumulative`);
+                            }}
+                        >
+                            <BarChart3 className="h-4 w-4" />
+                            Stats Générales Cumulées
+                        </Button>
+                    </div>
+
+                    <div className="flex-1 flex flex-wrap items-center justify-end gap-2">
                         <Button
                             variant="outline"
                             size="sm"
@@ -461,7 +492,16 @@ export default function PeriodMonitoringPage() {
                                         {statusConfig.icon}
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-sm">{courseName}</p>
+                                        {(status === "SUBMITTED" || status === "VALIDATED") && sub ? (
+                                            <p 
+                                                className="font-bold text-sm text-primary hover:underline cursor-pointer"
+                                                onClick={() => router.push(`/classrooms/${encodeURIComponent(classroomName)}/evaluations/monitoring/stats?mode=course&submissionId=${sub.id}`)}
+                                            >
+                                                {courseName}
+                                            </p>
+                                        ) : (
+                                            <p className="font-semibold text-sm">{courseName}</p>
+                                        )}
                                         {sub?.submittedAt && (
                                             <p className="text-[10px] text-muted-foreground">
                                                 Soumis le {new Date(sub.submittedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}

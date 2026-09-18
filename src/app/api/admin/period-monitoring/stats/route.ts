@@ -1,9 +1,16 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
+import { classroomNamesMatch } from "@/lib/classroom-utils";
 
 function normStr(s: string) {
-    return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+    if (!s) return "";
+    let n = s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+    // Align with the app's normalize() — ordinal contractions like "1ère" → "1e", "2ème" → "2e"
+    n = n.replace(/1ere/g, "1e").replace(/1er/g, "1e");
+    n = n.replace(/([2-9])eme/g, "$1e");
+    n = n.replace(/education de base/g, "cteb");
+    return n;
 }
 
 function formatStudentName(student: any) {
@@ -17,12 +24,40 @@ function formatStudentName(student: any) {
 
 async function resolveClassroom(school: any, classroomId: string | null) {
     if (!classroomId) return { resolvedId: null, classroom: null };
+
     const allClassrooms = await db.classroom.findMany({ where: { schoolMatricule: school.matricule } });
     const targetNorm = normStr(classroomId);
     const matched = allClassrooms.find(
-        (c) => c.id === classroomId || normStr(c.name) === targetNorm
+        (c: any) => c.id === classroomId || normStr(c.name) === targetNorm
     );
-    return { resolvedId: matched?.id || classroomId, classroom: matched || null };
+    
+    // Always compute the level from the name to ensure it's lowercase and correct,
+    // overriding potentially incorrect uppercase 'SECONDAIRE' values in the DB.
+    const nameNorm = normStr(matched?.name || classroomId);
+    let level = "primaire";
+    if (nameNorm.includes("maternelle") || nameNorm.includes("accueil")) {
+        level = "maternelle";
+    } else {
+        const secKw = ["cteb","humanite","secondaire","litter","scienti","commercial","pedagogi","techni","bio","meca","elec","7e ","8e ","education de base"];
+        if (secKw.some((kw) => nameNorm.includes(kw))) {
+            level = "secondaire";
+        } else {
+            const cal = typeof school.calendar === "string" ? JSON.parse(school.calendar) : school.calendar || {};
+            const secCl: string[] = cal?.secondaire?.classes || [];
+            const matCl: string[] = cal?.maternelle?.classes || [];
+            if (secCl.some((c: string) => normStr(c) === nameNorm)) level = "secondaire";
+            else if (matCl.some((c: string) => normStr(c) === nameNorm)) level = "maternelle";
+        }
+    }
+
+    if (matched) {
+        return { resolvedId: matched.id, classroom: { ...matched, level } };
+    }
+
+    return {
+        resolvedId: classroomId,
+        classroom: { id: classroomId, name: classroomId, grade: classroomId, level, schoolMatricule: school.matricule },
+    };
 }
 
 async function resolvePeriod(school: any, periodId: string | null) {
@@ -74,11 +109,9 @@ function getPeriodRank(name: string): number {
 
 function getCourseConfig(school: any, classroom: any) {
     const coursesObj = typeof school.courses === "string" ? JSON.parse(school.courses) : school.courses || {};
-    const gradeTarget = normStr(classroom?.grade || classroom?.name || "");
-    const gradeKey = Object.keys(coursesObj).find((k) => {
-        const kNorm = normStr(k);
-        return kNorm === gradeTarget || gradeTarget.includes(kNorm) || kNorm.includes(gradeTarget.split(" ")[0]);
-    });
+    const gradeKey = Object.keys(coursesObj).find((k) => 
+        classroomNamesMatch(k, classroom?.grade || "") || classroomNamesMatch(k, classroom?.name || "")
+    );
     const courses: any[] = gradeKey ? coursesObj[gradeKey] : [];
     const isMaternelle =
         normStr(classroom?.name || "").includes("maternel") ||
@@ -113,24 +146,61 @@ export async function GET(req: NextRequest) {
         // ─── CUMULATIVE MODE ─────────────────────────────────────────────────────
         if (mode === "cumulative") {
             const { resolvedId: resolvedClassroomId, classroom } = await resolveClassroom(school, classroomId);
-            if (!resolvedClassroomId || !classroom) {
-                return NextResponse.json({ error: "Local introuvable" }, { status: 404 });
+            if (!resolvedClassroomId) {
+                return NextResponse.json({ error: "Identifiant du local manquant" }, { status: 400 });
             }
 
-            // All periods for this school and this level
-            const allPeriods = await db.period.findMany({
-                where: { 
-                    schoolMatricule: school.matricule,
-                    level: classroom.level 
-                },
-                orderBy: { startDate: "asc" }
+            // All periods for this school and this level — case-insensitive level match
+            const calLevel = classroom.level || "primaire";
+            const calPeriods = calendar?.[calLevel]?.periods || [];
+            
+            const dbPeriodsRaw = await db.period.findMany({
+                where: { schoolMatricule: school.matricule }
             });
+            // Filter case-insensitively
+            const dbPeriods = dbPeriodsRaw.filter((p: any) => 
+                (p.level || "").toLowerCase() === calLevel.toLowerCase()
+            );
 
-            // All students for this classroom
+            // Build calId → dbUUID map, and allPeriods always using DB UUID
+            const calIdToDbUUID: Record<string, string> = {};
+            const allPeriods: any[] = [];
+            for (const cp of calPeriods) {
+                const cpNorm = normStr(cp.name);
+                const dbMatch = dbPeriods.find((p: any) => normStr(p.name) === cpNorm)
+                    // fallback: search across all periods of school by name
+                    || dbPeriodsRaw.find((p: any) => normStr(p.name) === cpNorm);
+                if (dbMatch) {
+                    calIdToDbUUID[cp.id] = dbMatch.id;
+                    allPeriods.push(dbMatch); // always use DB UUID
+                } else {
+                    // Period not yet in DB — keep calendar id as placeholder
+                    allPeriods.push({
+                        id: cp.id,
+                        name: cp.name,
+                        level: calLevel,
+                        startDate: cp.startDate || new Date(),
+                        endDate: cp.endDate || new Date(),
+                        _calOnly: true, // marker: no DB UUID yet
+                    });
+                }
+            }
+            
+            // Add any DB periods not matched from calendar
+            const addedIds = new Set(allPeriods.map((p) => p.id));
+            for (const dp of dbPeriods) {
+                if (!addedIds.has(dp.id)) {
+                    allPeriods.push(dp);
+                }
+            }
+
+            // All students for this classroom — match by DB classroom name OR by classroomName stored on student
+            const dbClassroom = await db.classroom.findUnique({ where: { id: resolvedClassroomId } });
+            const studentClassroomName = dbClassroom?.name || classroom.name;
             const students = await db.student.findMany({
                 where: {
                     schoolMatricule: school.matricule,
-                    classroomName: classroom.name,
+                    classroomName: studentClassroomName,
                     schoolYear: activeYear,
                     status: { in: ["active", "pending_payment"] },
                 },
@@ -139,22 +209,23 @@ export async function GET(req: NextRequest) {
             // Course config (to get base maxes)
             const { courses: gradeCourses, isMaternelle } = getCourseConfig(school, classroom);
 
-            // All closed course submissions for this classroom
+            // All closed course submissions for this classroom — use DB UUIDs only
+            const dbPeriodIds = allPeriods.filter((p: any) => !p._calOnly).map((p) => p.id);
             const allSubmissions = await (db as any).gradeSubmission.findMany({
                 where: {
                     classroomId: resolvedClassroomId,
                     status: { in: ["SUBMITTED", "VALIDATED"] },
                     courseId: { not: "PERIOD_CLOSURE" },
+                    ...(dbPeriodIds.length > 0 ? { periodId: { in: dbPeriodIds } } : {}),
                 },
                 include: { course: true, period: true },
             });
 
-            // All assessments for this classroom + all periods
-            const periodIds = allPeriods.map((p) => p.id);
+            // All assessments for this classroom using DB UUIDs
             const allAssessments = await db.assessment.findMany({
                 where: {
                     classroomId: resolvedClassroomId,
-                    periodId: { in: periodIds },
+                    ...(dbPeriodIds.length > 0 ? { periodId: { in: dbPeriodIds } } : {}),
                 },
                 include: { results: true },
             });
@@ -169,8 +240,9 @@ export async function GET(req: NextRequest) {
                 const isExam = /exam|-ex\b|\bex\b/i.test(normStr(period.name));
                 const studentScores: Record<string, { earned: number; max: number }> = {};
 
-                // Submissions closed for this period
-                const periodSubs = allSubmissions.filter((s: any) => s.periodId === period.id);
+                // Submissions for this period — use the DB UUID
+                const periodDbId = period._calOnly ? null : period.id;
+                const periodSubs = periodDbId ? allSubmissions.filter((s: any) => s.periodId === periodDbId) : [];
                 const closedCourseIds = new Set(periodSubs.map((s: any) => s.courseId));
 
                 for (const student of students) {
@@ -187,9 +259,9 @@ export async function GET(req: NextRequest) {
                         const sub = periodSubs.find((s: any) => normStr(s.course?.name || "") === courseNameNorm);
 
                         if (sub && closedCourseIds.has(sub.courseId)) {
-                            // Compute student score from assessments
+                            // Compute student score from assessments using DB UUID
                             const courseAssts = allAssessments.filter(
-                                (a: any) => a.courseId === sub.courseId && a.periodId === period.id
+                                (a: any) => a.courseId === sub.courseId && a.periodId === periodDbId
                             );
 
                             let courseEarned = 0;
@@ -207,7 +279,7 @@ export async function GET(req: NextRequest) {
                             if (coursePossible > 0) {
                                 earned += (courseEarned / coursePossible) * periodMax;
                             }
-                            // else earned += 0 (course closed but no assessments found → 0)
+                            // else earned += 0 (course closed but no assessments → 0)
                         }
                         // else earned += 0 (course not closed for this period → 0)
                     }

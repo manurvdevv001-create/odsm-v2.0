@@ -164,13 +164,9 @@ export default function BulletinsPage() {
 
         // 2. Identify Metadata (MaxPoints, Group) from the SPECIFIC GRADE configuration only
         const coursesObj = (schoolData?.courses as any) || {};
-        const classroomStr = normalize(classroomInfo?.grade || classroomName);
-        const gradeKey = Object.keys(coursesObj).find(k => {
-            const kLower = normalize(k);
-            return kLower === classroomStr || 
-                   classroomStr.includes(kLower) || 
-                   kLower.includes(classroomStr.split(' ')[0]);
-        });
+        const gradeKey = Object.keys(coursesObj).find(k => 
+            classroomNamesMatch(k, classroomName) || (classroomInfo && classroomNamesMatch(k, classroomInfo.name)) || (classroomInfo?.grade && classroomNamesMatch(k, classroomInfo.grade))
+        );
         const clCourses = gradeKey ? coursesObj[gradeKey] : [];
 
         // 3. Assemble - STRICT NO FALLBACK TO OTHER LEVELS

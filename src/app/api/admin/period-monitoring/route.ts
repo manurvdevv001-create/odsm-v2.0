@@ -5,7 +5,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const normStr = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim();
+const normStr = (s: string) => {
+    if (!s) return "";
+    let n = s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+    n = n.replace(/1ere/g, "1e").replace(/1er/g, "1e");
+    n = n.replace(/([2-9])eme/g, "$1e");
+    n = n.replace(/education de base/g, "cteb");
+    return n;
+};
 const normPunct = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-_\s]+/g, "").trim();
 
 /**
@@ -22,22 +29,28 @@ export async function GET(req: NextRequest) {
     }
 
     try {
+        const session = await getSession();
+        const school = session ? await db.school.findUnique({ where: { matricule: session.matricule }, select: { calendar: true, matricule: true } }) : await db.school.findFirst({ select: { calendar: true, matricule: true } });
+        
         // Resolve classroom
         let resolvedClassroomIds: string[] = [];
         if (uuidRegex.test(classroomId)) resolvedClassroomIds.push(classroomId);
-        const allClassrooms = await db.classroom.findMany();
+        const allClassrooms = school?.matricule ? await db.classroom.findMany({ where: { schoolMatricule: school.matricule } }) : await db.classroom.findMany();
         const targetNorm = normStr(classroomId);
         const matchedByName = allClassrooms.filter((c: any) => {
             const cNorm = normStr(c.name);
             return cNorm === targetNorm || cNorm.includes(targetNorm) || targetNorm.includes(cNorm);
         }).map((c: any) => c.id);
         resolvedClassroomIds = Array.from(new Set([...resolvedClassroomIds, ...matchedByName]));
+        if (resolvedClassroomIds.length === 0) {
+            resolvedClassroomIds.push(classroomId);
+        }
 
         // Resolve period
         let resolvedPeriodIds: string[] = [];
         if (periodId) {
             if (uuidRegex.test(periodId)) resolvedPeriodIds.push(periodId);
-            const allPeriods = await db.period.findMany();
+            const allPeriods = school?.matricule ? await db.period.findMany({ where: { schoolMatricule: school.matricule } }) : await db.period.findMany();
             const pNorm = normStr(periodId);
             const pPunct = normPunct(periodId);
             const matched = allPeriods.filter((p: any) => {
@@ -53,8 +66,6 @@ export async function GET(req: NextRequest) {
             resolvedPeriodIds = Array.from(new Set([...resolvedPeriodIds, ...matched]));
 
             if (resolvedPeriodIds.length === 0 || (resolvedPeriodIds.length === 1 && resolvedPeriodIds[0] === periodId)) {
-                const session = await getSession();
-                const school = session ? await db.school.findUnique({ where: { matricule: session.matricule }, select: { calendar: true } }) : await db.school.findFirst({ select: { calendar: true } });
                 if (school?.calendar) {
                     const calendar = typeof school.calendar === 'string' ? JSON.parse(school.calendar) : school.calendar;
                     for (const level of ['primaire', 'secondaire', 'maternelle']) {
@@ -85,6 +96,9 @@ export async function GET(req: NextRequest) {
                         }
                     }
                 }
+            }
+            if (resolvedPeriodIds.length === 0) {
+                resolvedPeriodIds.push(periodId);
             }
         }
 

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSession } from "@/lib/auth";
+import { classroomNamesMatch } from "@/lib/classroom-utils";
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const normStr = (s: string) => {
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
         let classroomLevel = "secondaire";
         let classroomGrade = "";
         
-        const allClassrooms = await db.classroom.findMany();
+        const allClassrooms = await db.classroom.findMany({ where: { schoolMatricule: school.matricule } });
         const targetNorm = normStr(classroomName);
         const matchedClassroom = allClassrooms.find((c: any) => {
             const cNorm = normStr(c.name);
@@ -49,8 +50,25 @@ export async function GET(req: NextRequest) {
 
         if (matchedClassroom) {
             resolvedClassroomId = matchedClassroom.id;
-            classroomLevel = matchedClassroom.level?.toLowerCase() || "secondaire";
             classroomGrade = matchedClassroom.grade || "";
+        }
+        
+        // Compute level from name to override potential DB errors
+        const nameNormForLevel = normStr(matchedClassroom?.name || classroomName);
+        if (nameNormForLevel.includes("maternelle") || nameNormForLevel.includes("accueil")) {
+            classroomLevel = "maternelle";
+        } else {
+            const secKw = ["cteb","humanite","secondaire","litter","scienti","commercial","pedagogi","techni","bio","meca","elec","7e ","8e ","education de base"];
+            if (secKw.some((kw) => nameNormForLevel.includes(kw))) {
+                classroomLevel = "secondaire";
+            } else {
+                const cal = typeof school.calendar === "string" ? JSON.parse(school.calendar) : school.calendar || {};
+                const secCl: string[] = cal?.secondaire?.classes || [];
+                const matCl: string[] = cal?.maternelle?.classes || [];
+                if (secCl.some((c: string) => normStr(c) === nameNormForLevel)) classroomLevel = "secondaire";
+                else if (matCl.some((c: string) => normStr(c) === nameNormForLevel)) classroomLevel = "maternelle";
+                else classroomLevel = "primaire";
+            }
         }
 
         // Fetch students
@@ -115,11 +133,9 @@ export async function GET(req: NextRequest) {
 
         // Parse school courses to find max points
         const coursesObj = typeof school.courses === 'string' ? JSON.parse(school.courses) : (school.courses || {});
-        const gradeKey = Object.keys(coursesObj).find(k => {
-            const kLower = normStr(k);
-            const target = normStr(classroomGrade || matchedClassroom?.name || classroomName);
-            return kLower === target || target.includes(kLower) || kLower.includes(target.split(' ')[0]);
-        });
+        const gradeKey = Object.keys(coursesObj).find(k => 
+            classroomNamesMatch(k, classroomGrade) || classroomNamesMatch(k, matchedClassroom?.name || classroomName)
+        );
         const gradeCourses = gradeKey ? coursesObj[gradeKey] : [];
 
         // Map courses using normalized keys and fallback to ID
@@ -197,8 +213,8 @@ export async function GET(req: NextRequest) {
                     });
 
                     if (periodPossible > 0) {
-                        const isExam = normPeriodName.includes("exam");
-                        const periodMax = isExam ? course.max * 2 : course.max;
+                        const isExam = /exam|-ex\b|\bex\b/i.test(normPeriodName);
+                        const periodMax = isExam && !isMaternelle ? course.max * 2 : course.max;
                         const periodScore = (periodEarned / periodPossible) * periodMax;
                         totalEarned += periodScore;
                         totalPossible += periodMax;
@@ -282,7 +298,7 @@ export async function POST(req: NextRequest) {
         // Resolve calendar period ID to DB UUID
         const calendar = typeof school.calendar === 'string' ? JSON.parse(school.calendar) : school.calendar;
         const activeYear = calendar?.schoolYear || "2024-2025";
-        const allClassrooms = await db.classroom.findMany();
+        const allClassrooms = await db.classroom.findMany({ where: { schoolMatricule: school.matricule } });
         const targetNorm = normStr(classroomId || "");
         const matchedClassroom = allClassrooms.find((c: any) => {
             const cNorm = normStr(c.name);

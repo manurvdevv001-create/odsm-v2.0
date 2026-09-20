@@ -43,6 +43,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
     { href: "/staff", label: "Personnel", icon: GraduationCap },
     { href: "/classrooms", label: "Locaux", icon: School },
     { href: "/timetable", label: "Horaires", icon: Calendar },
+    { href: "/calendar", label: "Calendrier Scolaire", icon: CalendarDays },
     { href: "/activity", label: "Journal", icon: History },
     { href: "/settings", label: "Paramètres", icon: Settings },
     { href: "/settings/calendar", label: "Calendrier Scolaire", icon: CalendarDays },
@@ -51,30 +52,30 @@ const ALL_NAV_ITEMS: NavItem[] = [
 // Routes each role is allowed to access
 const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
     // Admin roles — full access (except teacher portal)
-    ADMIN: ["/dashboard", "/students", "/finances", "/staff", "/classrooms", "/timetable", "/activity", "/settings"],
-    ADMIN_SYSTEM: ["/dashboard", "/activity", "/settings", "/settings/users", "/settings/backups"],
-    SUPERADMIN: ["/dashboard", "/students", "/finances", "/staff", "/classrooms", "/timetable", "/activity", "/settings"],
+    ADMIN: ["/dashboard", "/students", "/finances", "/staff", "/classrooms", "/timetable", "/calendar", "/activity", "/settings"],
+    ADMIN_SYSTEM: ["/dashboard", "/activity", "/calendar", "/settings", "/settings/users", "/settings/backups"],
+    SUPERADMIN: ["/dashboard", "/students", "/finances", "/staff", "/classrooms", "/timetable", "/calendar", "/activity", "/settings"],
 
     // Supervisor / Directeur — read-only visualization + category migration in finance
-    SUPERVISOR: ["/dashboard", "/finances", "/staff", "/classrooms", "/timetable", "/activity", "/settings/users", "/settings/finance", "/settings/calendar"],
+    SUPERVISOR: ["/dashboard", "/finances", "/staff", "/classrooms", "/timetable", "/calendar", "/activity", "/settings/users", "/settings/finance", "/settings/calendar"],
 
     // Secretary — everything except Finances, Personnel, Journal, Paramètres; gets Calendrier Scolaire
-    SECRETARY: ["/dashboard", "/students", "/classrooms", "/timetable", "/settings/calendar"],
+    SECRETARY: ["/dashboard", "/students", "/classrooms", "/timetable", "/calendar", "/settings/calendar"],
 
     // Cashier (Percepteur) — only Finances + Dashboard
-    CASHIER: ["/dashboard", "/finances"],
+    CASHIER: ["/dashboard", "/finances", "/calendar"],
 
     // Secretary + Cashier — union of both
-    SECRETARY_CASHIER: ["/dashboard", "/students", "/finances", "/classrooms", "/timetable", "/settings/calendar"],
+    SECRETARY_CASHIER: ["/dashboard", "/students", "/finances", "/classrooms", "/timetable", "/calendar", "/settings/calendar"],
 
     // Teacher — only teacher portal
-    TEACHER: ["/teacher"],
+    TEACHER: ["/teacher", "/calendar"],
 
     // Préfet des Études (Directeur de discipline) — supervisor of discipline + visualization
-    PREFET: ["/dashboard", "/classrooms", "/timetable", "/activity"],
+    PREFET: ["/dashboard", "/classrooms", "/timetable", "/calendar", "/activity"],
 
     // Discipline — attendance, conduct, discipline journal
-    DISCIPLINE: ["/dashboard", "/classrooms", "/timetable", "/activity"],
+    DISCIPLINE: ["/dashboard", "/classrooms", "/timetable", "/calendar", "/activity"],
 };
 
 /**

@@ -185,8 +185,14 @@ export async function saveSchoolCalendar(
         knownYears = Array.from(new Set(knownYears)).sort();
 
         // Prepare the calendar object with optional snapshots
-        const calendarWithSnapshots = { 
+        const calendarWithSnapshots = {
             ...calendar,
+            // A public holiday applies to the whole school, regardless of academic level.
+            holidays: Array.isArray(calendar.holidays)
+                ? calendar.holidays.map((holiday: Record<string, unknown>) =>
+                    Object.fromEntries(Object.entries(holiday).filter(([key]) => key !== 'appliesTo'))
+                )
+                : [],
             ...(contextualData?.structure && { structure: contextualData.structure }),
             ...(contextualData?.courses && { courses: contextualData.courses }),
             ...(contextualData?.timeSlots && { timeSlots: contextualData.timeSlots }),

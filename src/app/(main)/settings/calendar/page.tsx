@@ -63,7 +63,6 @@ type HolidayEntry = {
     id: string;
     name: string;
     date: string;
-    appliesTo: ('maternelle' | 'primaire' | 'secondaire')[];
 };
 
 type Vacation = {
@@ -205,6 +204,9 @@ export default function CalendarSettingsPage() {
                 if (!merged.maternelle?.periods?.length) merged.maternelle.periods = INITIAL_STRUCTURES.maternelle.map(p => ({ ...p, startDate: '', endDate: '' }));
                 if (!merged.primaire?.periods?.length) merged.primaire.periods = INITIAL_STRUCTURES.primaire.map(p => ({ ...p, startDate: '', endDate: '' }));
                 if (!merged.secondaire?.periods?.length) merged.secondaire.periods = INITIAL_STRUCTURES.secondaire.map(p => ({ ...p, startDate: '', endDate: '' }));
+                merged.holidays = (merged.holidays || []).map((holiday: HolidayEntry & { appliesTo?: string[] }) =>
+                    Object.fromEntries(Object.entries(holiday).filter(([key]) => key !== 'appliesTo'))
+                );
 
                 setCalendar(merged);
             } else {
@@ -784,23 +786,17 @@ export default function CalendarSettingsPage() {
                                                         <div className="flex justify-between items-center">
                                                             <div>
                                                                 <CardTitle className="text-lg font-black tracking-tight">Jours Fériés</CardTitle>
-                                                                <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Calendrier des congés légaux</CardDescription>
+                                                                <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Calendrier des congés légaux — tous les niveaux</CardDescription>
                                                             </div>
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
                                                                 className="h-9 px-4 rounded-xl border-primary/10 bg-background/40 hover:bg-primary/10 text-primary font-black text-[10px] uppercase transition-all"
                                                                 onClick={() => {
-                                                                    const levels: ('maternelle' | 'primaire' | 'secondaire')[] = [];
-                                                                    if (hasMaternelle) levels.push('maternelle');
-                                                                    if (hasPrimaire) levels.push('primaire');
-                                                                    if (hasSecondaire) levels.push('secondaire');
-
                                                                     const newHoliday: HolidayEntry = { 
                                                                         id: `hol_${Date.now()}`, 
                                                                         name: '', 
-                                                                        date: '', 
-                                                                        appliesTo: levels 
+                                                                        date: ''
                                                                     };
                                                                     updateCalendarField('holidays', [...(calendar.holidays || []), newHoliday]);
                                                                 }}
@@ -850,28 +846,6 @@ export default function CalendarSettingsPage() {
                                                                             >
                                                                                 <Trash2 className="h-4 w-4" />
                                                                             </Button>
-                                                                        </div>
-                                                                        <div className="flex flex-wrap gap-4 px-1">
-                                                                            {(['maternelle', 'primaire', 'secondaire'] as const).map((lvl) => {
-                                                                                const exists = (lvl === 'maternelle' && hasMaternelle) || (lvl === 'primaire' && hasPrimaire) || (lvl === 'secondaire' && hasSecondaire);
-                                                                                if (!exists) return null;
-                                                                                return (
-                                                                                    <label key={lvl} className="flex items-center gap-2 cursor-pointer group/label">
-                                                                                        <Checkbox 
-                                                                                            className="rounded-md border-primary/20 data-[state=checked]:bg-primary"
-                                                                                            checked={holiday.appliesTo?.includes(lvl)} 
-                                                                                            onCheckedChange={(checked) => {
-                                                                                                const updated = [...calendar.holidays];
-                                                                                                const current = holiday.appliesTo || [];
-                                                                                                const levels = checked ? [...current, lvl] : current.filter(l => l !== lvl);
-                                                                                                updated[idx] = { ...updated[idx], appliesTo: levels };
-                                                                                                updateCalendarField('holidays', updated);
-                                                                                            }}
-                                                                                        />
-                                                                                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground group-hover/label:text-primary transition-colors">{lvl}</span>
-                                                                                    </label>
-                                                                                );
-                                                                            })}
                                                                         </div>
                                                                     </div>
                                                                 ))}

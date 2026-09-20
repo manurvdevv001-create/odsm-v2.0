@@ -1,0 +1,17 @@
+"use client";
+
+import { Loader2 } from "lucide-react";
+import { SchoolCalendarView } from "@/components/school-calendar-view";
+import { getVisibleCalendarLevels } from "@/lib/calendar-access";
+import { useSchoolData } from "@/components/providers/SchoolDataProvider";
+
+export default function CalendarPage() {
+    const { schoolData, user, isLoading } = useSchoolData();
+
+    if (isLoading || !schoolData) {
+        return <div className="flex min-h-[40vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    }
+
+    const levels = getVisibleCalendarLevels(user, schoolData);
+    return <SchoolCalendarView calendar={schoolData.calendar || {}} levels={levels} />;
+}

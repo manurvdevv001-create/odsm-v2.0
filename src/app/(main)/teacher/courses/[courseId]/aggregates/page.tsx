@@ -243,8 +243,9 @@ export default function GradeAggregatesPage() {
             periods.forEach((p: any) => { studentGrades[p.id] = { total: 0, max: 0 }; });
 
             assessments.forEach(ass => {
-                // EXCLUDE suspended and unpublished assessments to match Totals
-                if (ass.isSuspended || !ass.isPublished) return;
+                // Confirmed assessments contribute their maxima and weights even
+                // before results are published.
+                if (ass.isSuspended) return;
 
                 // Resolve: assessment's DB period → calendar period ID
                 // Strategy 1: Match by period name (most reliable based on our debug)

@@ -1,6 +1,7 @@
 // src/app/api/teacher/grades/route.ts
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { getPeriodState } from "@/lib/assessment-period";
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -131,8 +132,14 @@ export async function GET(req: NextRequest) {
                 solvedPeriodIds.push(periodId);
             }
 
-            const allPeriods = await db.period.findMany();
-            const matchedPeriods = allPeriods.filter((p: any) => {
+            const allPeriods = await db.period.findMany({ where: { schoolMatricule: activeMatricule || undefined } });
+            const currentYearPeriods = activeSchoolYear
+                ? allPeriods.filter((p: any) => p.schoolYear === activeSchoolYear)
+                : allPeriods;
+            const periodPool = currentYearPeriods.length > 0
+                ? currentYearPeriods
+                : allPeriods.filter((p: any) => p.schoolYear == null);
+            const matchedPeriods = periodPool.filter((p: any) => {
                 const pNorm = normStr(p.name);
                 const pPunct = normPunct(p.name);
                 // Exact matching
@@ -161,10 +168,12 @@ export async function GET(req: NextRequest) {
                             const calMatch = calPeriods[calMatchIdx];
                             // Found matching calendar entry → find DB period by exact name
                             const calNameNorm = normStr(calMatch.name);
-                            let dbMatches = allPeriods.filter((p: any) => normStr(p.name) === calNameNorm).map((p: any) => p.id);
+                            let dbMatches = periodPool
+                                .filter((p: any) => normStr(p.name) === calNameNorm)
+                                .map((p: any) => p.id);
                             // If name-based matching fails, try matching by type+position within the level
                             if (dbMatches.length === 0) {
-                                const levelPeriods = allPeriods
+                                const levelPeriods = periodPool
                                     .filter((p: any) => normStr(p.level) === normStr(level) && p.schoolMatricule === activeMatricule)
                                     .sort((a: any, b: any) => a.name.localeCompare(b.name, 'fr'));
                                 const calType = calMatch.type === 'exam' ? 'EXAM' : 'PERIOD';
@@ -347,7 +356,8 @@ export async function POST(req: NextRequest) {
             periodId,
             results,
             isSuspended,
-            schoolMatricule
+            schoolMatricule,
+            source = "gradebook"
         } = body;
 
         if (!title || !maxScore || !courseId || !classroomId || !periodId) {
@@ -364,6 +374,27 @@ export async function POST(req: NextRequest) {
             : null;
         const activeSchoolYearPost = resolveActiveYear(calForYear);
         console.log(`[Grades POST] Active schoolYear for ${schoolMatricule}:`, activeSchoolYearPost);
+
+        const targetClassroom = await db.classroom.findFirst({
+            where: { schoolMatricule, OR: [{ id: classroomId }, { name: classroomId }] }
+        });
+        if (!targetClassroom) {
+            return NextResponse.json({ error: "Classe introuvable dans l'établissement." }, { status: 404 });
+        }
+        const targetPeriod = await db.period.findFirst({
+            where: {
+                schoolMatricule,
+                OR: [{ id: periodId }, { name: periodId }],
+                ...(activeSchoolYearPost ? { schoolYear: activeSchoolYearPost } : {})
+            }
+        });
+        const periodState = getPeriodState(calForYear || {}, targetClassroom, periodId, targetPeriod?.name);
+        if (periodState === "unknown") {
+            return NextResponse.json({ error: "Période introuvable dans le calendrier scolaire." }, { status: 404 });
+        }
+        if (periodState !== "active" && source !== "planning") {
+            return NextResponse.json({ error: "Hors période active : utilisez la planification des épreuves." }, { status: 403 });
+        }
 
         // --- NEW: Closure Check ---
         const closure = await (db as any).gradeSubmission.findFirst({
@@ -768,7 +799,7 @@ export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
         console.log("PUT Grades Body:", body);
-        const { assessmentId, title, type, date, maxScore, pondere, isSuspended, results } = body;
+        const { assessmentId, title, type, date, maxScore, pondere, isSuspended, results, source = "gradebook" } = body;
 
         if (!assessmentId) {
             return NextResponse.json({ error: "assessmentId requis" }, { status: 400 });
@@ -781,6 +812,15 @@ export async function PUT(req: NextRequest) {
         });
 
         if (targetAssessment) {
+            const school = await db.school.findFirst({ where: { matricule: targetAssessment.schoolMatricule }, select: { calendar: true } });
+            const classroom = await db.classroom.findUnique({ where: { id: targetAssessment.classroomId } });
+            const calendar = school?.calendar ? JSON.parse(school.calendar) : {};
+            const period = await db.period.findUnique({ where: { id: targetAssessment.periodId }, select: { name: true } });
+            const periodState = classroom ? getPeriodState(calendar, classroom, targetAssessment.periodId, period?.name) : "unknown";
+            if (periodState === "unknown") return NextResponse.json({ error: "Période introuvable dans le calendrier scolaire." }, { status: 404 });
+            if (periodState !== "active" && source !== "planning") {
+                return NextResponse.json({ error: "Hors période active : utilisez la planification des épreuves." }, { status: 403 });
+            }
             const closure = await (db as any).gradeSubmission.findUnique({
                 where: {
                     periodId_courseId_classroomId: {
@@ -870,6 +910,7 @@ export async function DELETE(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const assessmentId = searchParams.get("assessmentId");
+        const source = searchParams.get("source") || "gradebook";
 
         if (!assessmentId) {
             return NextResponse.json({ error: "assessmentId requis" }, { status: 400 });
@@ -882,6 +923,15 @@ export async function DELETE(req: NextRequest) {
         });
 
         if (targetAssessment) {
+            const school = await db.school.findFirst({ where: { matricule: targetAssessment.schoolMatricule }, select: { calendar: true } });
+            const classroom = await db.classroom.findUnique({ where: { id: targetAssessment.classroomId } });
+            const calendar = school?.calendar ? JSON.parse(school.calendar) : {};
+            const period = await db.period.findUnique({ where: { id: targetAssessment.periodId }, select: { name: true } });
+            const periodState = classroom ? getPeriodState(calendar, classroom, targetAssessment.periodId, period?.name) : "unknown";
+            if (periodState === "unknown") return NextResponse.json({ error: "Période introuvable dans le calendrier scolaire." }, { status: 404 });
+            if (periodState !== "active" && source !== "planning") {
+                return NextResponse.json({ error: "Hors période active : utilisez la planification des épreuves." }, { status: 403 });
+            }
             const closure = await (db as any).gradeSubmission.findUnique({
                 where: {
                     periodId_courseId_classroomId: {

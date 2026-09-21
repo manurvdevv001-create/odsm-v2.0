@@ -95,6 +95,9 @@ export default function CourseDetailPage() {
     }, [schoolData?.matricule, user?.profile?.level, activePeriod]);
 
     const isExamPeriod = activePeriod?.type === 'exam';
+    const selectedPeriod = periods.find(period => period.id === selectedPeriodId);
+    const isActiveSelectedPeriod = !!selectedPeriod?.isActive || selectedPeriod?.id === activePeriod?.id;
+    const isReadOnlyPeriod = selectedPeriodId !== "all" && !isActiveSelectedPeriod;
 
     const courseInfo = useMemo(() => {
         if (!courseId || !schoolData) return null;
@@ -252,6 +255,10 @@ export default function CourseDetailPage() {
     }, [fetchAssessments]);
 
     const handleDelete = async (assessmentId: string, title: string) => {
+        if (effectiveIsClosed || isReadOnlyPeriod) {
+            toast.error(isReadOnlyPeriod ? "Cette période est en lecture seule." : "Cette période est clôturée.");
+            return;
+        }
         try {
             const res = await fetch(`/api/teacher/grades?assessmentId=${assessmentId}`, { method: 'DELETE' });
             if (res.ok) {
@@ -267,6 +274,10 @@ export default function CourseDetailPage() {
     };
 
     const handleToggleSuspend = async (assessmentId: string, currentStatus: boolean, title: string) => {
+        if (effectiveIsClosed || isReadOnlyPeriod) {
+            toast.error(isReadOnlyPeriod ? "Cette période est en lecture seule." : "Cette période est clôturée.");
+            return;
+        }
         try {
             const res = await fetch('/api/teacher/grades', {
                 method: 'PUT',
@@ -314,7 +325,7 @@ export default function CourseDetailPage() {
     }, [assessments]);
 
     const handleClosePeriod = async () => {
-        if (!selectedPeriodId || selectedPeriodId === "all" || isClosed) return;
+        if (!selectedPeriodId || selectedPeriodId === "all" || isClosed || isReadOnlyPeriod || !isActiveSelectedPeriod) return;
         setIsClosing(true);
         try {
             const res = await fetch('/api/teacher/grades/close', {
@@ -369,10 +380,10 @@ export default function CourseDetailPage() {
                     <div>
                         <div className="flex items-center gap-3 flex-wrap">
                             <h1 className="text-2xl md:text-3xl font-black tracking-tight uppercase">{courseInfo.name}</h1>
-                            {effectiveIsClosed && (
-                                <Badge className={cn("bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none gap-1.5 py-1 px-3 font-bold", isYearLocked && "bg-amber-500/10 text-amber-600")}>
-                                    {isYearLocked ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                                    {isYearLocked ? "LECTURE SEULE" : "PÉRIODE CLÔTURÉE"}
+                            {(effectiveIsClosed || isReadOnlyPeriod) && (
+                                <Badge className={cn("bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none gap-1.5 py-1 px-3 font-bold", (isYearLocked || isReadOnlyPeriod) && "bg-amber-500/10 text-amber-600")}>
+                                    {isYearLocked || isReadOnlyPeriod ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                                    {isYearLocked ? "ANNÉE EN LECTURE SEULE" : isReadOnlyPeriod ? "PÉRIODE EN LECTURE SEULE" : "PÉRIODE CLÔTURÉE"}
                                 </Badge>
                             )}
                         </div>
@@ -404,8 +415,8 @@ export default function CourseDetailPage() {
                             <Calculator className="h-4 w-4 text-primary" /> Totaux
                         </Button>
                     </Link>
-                    <Link href={effectiveIsClosed ? '#' : `/teacher/assessments/new?courseId=${courseId}&periodId=${selectedPeriodId}`} className={effectiveIsClosed ? 'pointer-events-none' : ''}>
-                        <button className={cn("gradient-btn gap-2 font-bold px-5 py-2 rounded-xl text-sm flex items-center", effectiveIsClosed && "opacity-50 cursor-not-allowed")} disabled={effectiveIsClosed}>
+                    <Link href={effectiveIsClosed || isReadOnlyPeriod ? '#' : `/teacher/assessments/new?courseId=${courseId}&periodId=${selectedPeriodId}`} className={effectiveIsClosed || isReadOnlyPeriod ? 'pointer-events-none' : ''}>
+                        <button className={cn("gradient-btn gap-2 font-bold px-5 py-2 rounded-xl text-sm flex items-center", (effectiveIsClosed || isReadOnlyPeriod) && "opacity-50 cursor-not-allowed")} disabled={effectiveIsClosed || isReadOnlyPeriod}>
                             <Plus className="h-4 w-4" />
                             {effectiveIsClosed ? 'Verrouillé' : 'Nouvelle Épreuve'}
                         </button>
@@ -418,7 +429,7 @@ export default function CourseDetailPage() {
                                     variant={effectiveIsClosed ? "outline" : "destructive"} 
                                     size="sm"
                                     className={cn("rounded-xl gap-2 font-bold", !effectiveIsClosed && "bg-amber-600 hover:bg-amber-700 border-none")}
-                                    disabled={effectiveIsClosed}
+                                    disabled={effectiveIsClosed || isReadOnlyPeriod || !isActiveSelectedPeriod}
                                 >
                                     {effectiveIsClosed ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Send className="h-4 w-4" />}
                                     {effectiveIsClosed ? "Clôturée" : "Clôturer"}

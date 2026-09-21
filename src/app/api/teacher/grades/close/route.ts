@@ -1,6 +1,7 @@
 // src/app/api/teacher/grades/close/route.ts
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { getPeriodState } from "@/lib/assessment-period";
 
 export async function POST(req: NextRequest) {
     try {
@@ -140,6 +141,20 @@ export async function POST(req: NextRequest) {
         }
 
         console.log("[Grade Closure] Resolved:", { solvedClassroomIds, solvedCourseIds, solvedPeriodIds });
+
+        const resolvedClassroom = solvedClassroomIds[0]
+            ? await db.classroom.findUnique({ where: { id: solvedClassroomIds[0] } })
+            : null;
+        const closureSchool = activeMatricule
+            ? await db.school.findFirst({ where: { matricule: activeMatricule }, select: { calendar: true } })
+            : null;
+        const closureCalendar = closureSchool?.calendar ? JSON.parse(closureSchool.calendar) : {};
+        const closurePeriod = solvedPeriodIds[0]
+            ? await db.period.findUnique({ where: { id: solvedPeriodIds[0] }, select: { name: true } })
+            : null;
+        if (!resolvedClassroom || !solvedPeriodIds[0] || getPeriodState(closureCalendar, resolvedClassroom, solvedPeriodIds[0], closurePeriod?.name) !== "active") {
+            return NextResponse.json({ error: "Un cours ne peut être clôturé que pendant la période active." }, { status: 403 });
+        }
 
         // 5. Find assessments (same as GET) to extract the REAL IDs
         let finalCourseId = solvedCourseIds[0];

@@ -97,9 +97,9 @@ export default function GradeGridPage() {
             const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
-                // Filter only published assessments and sort by date ascending
+                // Confirmed assessments remain visible so their maxima and weights
+                // are represented before results are published.
                 const list = (data.assessments || [])
-                    .filter((a: any) => a.isPublished)
                     .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
                 setAssessments(list);
             }

@@ -85,9 +85,9 @@ export default function TotalsPage() {
             const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
-                // ONLY use published assessments for totals that match the panoramic view
-                const filtered = (data.assessments || []).filter((a: any) => a.isPublished);
-                setAssessments(filtered);
+                // Confirmed assessments contribute their maxima and weights even
+                // before results are published.
+                setAssessments(data.assessments || []);
             }
         } catch {
             console.error("Failed to fetch assessments");

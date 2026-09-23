@@ -229,6 +229,26 @@ export async function saveSchoolCalendar(
             }
         });
 
+        // Keep the year-specific snapshot in sync. The school API prefers this
+        // record whenever it exists, otherwise calendar edits appear frozen.
+        const yearSettingsUpdate: Record<string, string> = {
+            calendar: JSON.stringify(calendarWithSnapshots),
+        };
+        if (contextualData?.structure) yearSettingsUpdate.structure = JSON.stringify(contextualData.structure);
+        if (contextualData?.courses) yearSettingsUpdate.courses = JSON.stringify(contextualData.courses);
+        if (contextualData?.timeSlots) yearSettingsUpdate.timeSlots = JSON.stringify(contextualData.timeSlots);
+        if (contextualData?.timetables) yearSettingsUpdate.timetables = JSON.stringify(contextualData.timetables);
+
+        await db.schoolYearSettings.updateMany({
+            where: {
+                schoolMatricule: matricule,
+                schoolYear: calendar.schoolYear,
+            },
+            data: yearSettingsUpdate,
+        });
+
+        revalidatePath("/calendar");
+        revalidatePath("/settings/calendar");
         await logActivity(
             matricule, 
             `Calendrier scolaire mis à jour (${calendar.schoolYear})`, 

@@ -30,6 +30,11 @@ function parseAssignedCourses(value: unknown): string[] {
 }
 
 export function getVisibleCalendarLevels(user: any, schoolData: Record<string, any>): AcademicLevel[] {
+    const configuredLevels = schoolData?.levels || {};
+    const enabledLevels = LEVELS.filter(level =>
+        Boolean(configuredLevels[level] ?? configuredLevels[level.toUpperCase()])
+    );
+    const isEnabled = (level: AcademicLevel) => enabledLevels.includes(level);
     const assignedRefs: string[] = [];
     const profile = user?.profile;
 
@@ -55,7 +60,10 @@ export function getVisibleCalendarLevels(user: any, schoolData: Record<string, a
     const role = String(user?.role || "").toUpperCase();
     if (role === "TEACHER") {
         const profileLevel = normalizeLevel(profile?.level);
-        return sortAcademicLevels(Array.from(new Set([...assignedLevels, ...(profileLevel ? [profileLevel] : [])])));
+        return sortAcademicLevels(Array.from(new Set([
+            ...assignedLevels.filter(isEnabled),
+            ...(profileLevel && isEnabled(profileLevel) ? [profileLevel] : [])
+        ])));
     }
 
     const restrictions = getUserRestrictions(user);
@@ -72,8 +80,8 @@ export function getVisibleCalendarLevels(user: any, schoolData: Record<string, a
     const levels = [...restrictedLevels, ...assignedLevels, ...restrictedClassroomLevels];
 
     if (restrictions.levels.length === 0 && restrictions.classrooms.length === 0) {
-        return LEVELS.filter(level => schoolData.calendar?.[level]);
+        return enabledLevels.filter(level => schoolData.calendar?.[level]);
     }
 
-    return sortAcademicLevels(Array.from(new Set(levels)));
+    return sortAcademicLevels(Array.from(new Set(levels.filter(isEnabled))));
 }

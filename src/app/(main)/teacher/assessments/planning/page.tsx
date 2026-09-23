@@ -11,12 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { matchTeacherName } from "@/lib/utils";
+import { getClassroomLevel } from "@/lib/classroom-utils";
 
 type Assignment = { id: string; name: string; classroomId: string; classroomName: string; level: string };
 type Period = { id: string; name: string; type?: string; startDate?: string; endDate?: string; isActive?: boolean };
 type Classroom = { id: string; name: string; level?: string };
 type AssessmentRecord = { id: string; title: string; type: string; date: string; maxScore: number; pondere?: number | null };
 type AssignmentInput = { classroom?: string; level?: string; courses?: string[] };
+type AcademicLevel = "maternelle" | "primaire" | "secondaire";
 
 export default function AssessmentPlanningPage() {
     const { user, schoolData } = useSchoolData();
@@ -48,7 +50,7 @@ export default function AssessmentPlanningPage() {
                 name: courseName,
                 classroomId,
                 classroomName: classroom?.name || classroomRef,
-                level: classroom?.level || level || ""
+                level: getClassroomLevel(classroom?.name || classroomRef, schoolData) || classroom?.level || level || ""
             });
         };
 
@@ -102,8 +104,18 @@ export default function AssessmentPlanningPage() {
     const selectedAssignment = assignments.find(item => item.id === selectedAssignmentId);
     const periods = useMemo<Period[]>(() => {
         if (!selectedAssignment) return [];
-        return schoolData?.calendar?.[String(selectedAssignment.level).toLowerCase()]?.periods || [];
-    }, [schoolData?.calendar, selectedAssignment]);
+        const level = String(selectedAssignment.level || "").toLowerCase();
+        const calendar = schoolData?.calendar || {};
+        const calendarLevel: AcademicLevel | null =
+            level.includes("maternelle") ? "maternelle" :
+            level.includes("primaire") ? "primaire" :
+            level.includes("secondaire") ? "secondaire" :
+            getClassroomLevel(selectedAssignment.classroomName, schoolData);
+        if (!calendarLevel) return [];
+        return Array.isArray(calendar[calendarLevel]?.periods)
+            ? calendar[calendarLevel].periods
+            : [];
+    }, [schoolData, selectedAssignment]);
 
     useEffect(() => {
         if (!selectedAssignmentId && assignments[0]) setSelectedAssignmentId(assignments[0].id);
@@ -111,7 +123,11 @@ export default function AssessmentPlanningPage() {
 
     useEffect(() => {
         const active = periods.find(period => period.isActive) || periods[0];
-        if (active && !periods.some(period => period.id === selectedPeriodId)) setSelectedPeriodId(active.id);
+        if (active) {
+            if (!periods.some(period => period.id === selectedPeriodId)) setSelectedPeriodId(active.id);
+        } else {
+            setSelectedPeriodId("");
+        }
     }, [periods, selectedPeriodId]);
 
     const fetchAssessments = async () => {
@@ -219,7 +235,13 @@ export default function AssessmentPlanningPage() {
                         <Label>Période</Label>
                         <Select value={selectedPeriodId} onValueChange={setSelectedPeriodId}>
                             <SelectTrigger><SelectValue placeholder="Sélectionner une période" /></SelectTrigger>
-                            <SelectContent>{periods.map(period => <SelectItem key={period.id} value={period.id}>{period.name}{period.isActive ? " — active" : ""}</SelectItem>)}</SelectContent>
+                            <SelectContent>
+                                {periods.map(period => (
+                                    <SelectItem key={period.id} value={period.id}>
+                                        {period.name}{period.isActive ? " — active" : ""}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
                         </Select>
                     </div>
                 </CardContent>

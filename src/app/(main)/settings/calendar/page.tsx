@@ -31,6 +31,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { motion, AnimatePresence } from "framer-motion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type PeriodType = 'normal' | 'exam' | 'extra';
 
@@ -357,6 +358,12 @@ export default function CalendarSettingsPage() {
     }
 
     const isActiveYear = calendar.isActive;
+    const unscopedSections = [
+        { label: "Vacances scolaires", items: calendar.vacations },
+        { label: "Jours spéciaux", items: calendar.specialDays },
+        { label: "Délibérations", items: calendar.bufferPeriods },
+    ].filter(section => section.items?.some(item => !item.appliesTo?.length))
+        .map(section => section.label);
 
     return (
         <motion.div 
@@ -394,6 +401,18 @@ export default function CalendarSettingsPage() {
                     </Button>
                 </div>
             </div>
+
+            {unscopedSections.length > 0 && (
+                <Alert className="border-amber-300 bg-amber-50 text-amber-950">
+                    <AlertCircle className="h-5 w-5" />
+                    <AlertTitle>Niveau académique non spécifié</AlertTitle>
+                    <AlertDescription className="text-amber-900">
+                        Les rubriques suivantes ont été sauvegardées sans spécification de niveau :
+                        {" "}{unscopedSections.join(", ")}. Elles sont conservées dans cette configuration,
+                        mais ne sont affichées dans aucun calendrier utilisateur tant qu&apos;un niveau ne leur est pas associé.
+                    </AlertDescription>
+                </Alert>
+            )}
 
             {/* WIZARD CONTAINER */}
             <div className="grid grid-cols-12 gap-8">

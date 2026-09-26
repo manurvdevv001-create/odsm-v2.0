@@ -44,6 +44,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
     { href: "/classrooms", label: "Locaux", icon: School },
     { href: "/timetable", label: "Horaires", icon: Calendar },
     { href: "/calendar", label: "Calendrier Scolaire", icon: CalendarDays },
+    { href: "/teacher/calendar", label: "Calendrier Scolaire", icon: CalendarDays },
     { href: "/activity", label: "Journal", icon: History },
     { href: "/settings", label: "Paramètres", icon: Settings },
     { href: "/settings/calendar", label: "Calendrier Scolaire", icon: CalendarDays },
@@ -69,7 +70,7 @@ const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
     SECRETARY_CASHIER: ["/dashboard", "/students", "/finances", "/classrooms", "/timetable", "/calendar", "/settings/calendar"],
 
     // Teacher — only teacher portal
-    TEACHER: ["/teacher", "/calendar"],
+    TEACHER: ["/teacher", "/teacher/calendar"],
 
     // Préfet des Études (Directeur de discipline) — supervisor of discipline + visualization
     PREFET: ["/dashboard", "/classrooms", "/timetable", "/calendar", "/activity"],

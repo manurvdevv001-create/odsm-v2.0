@@ -6,6 +6,7 @@ import {
     LayoutDashboard, 
     BookOpen, 
     CalendarCheck, 
+    CalendarDays,
     Users, 
     FileText, 
     Trophy,
@@ -75,6 +76,12 @@ export default function TeacherLayout({
             label: "Planification", 
             icon: CalendarCheck,
             mobileLabel: "Planning"
+        },
+        {
+            href: "/teacher/calendar",
+            label: "Calendrier",
+            icon: CalendarDays,
+            mobileLabel: "Calendrier"
         },
         { 
             href: "/teacher/attendance", 

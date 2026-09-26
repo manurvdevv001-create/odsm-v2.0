@@ -1,8 +1,8 @@
 "use client";
 
-import { CalendarDays, Clock, Palmtree, Sun } from "lucide-react";
+import { CalendarDays, ChevronDown, Clock, Palmtree, Sun } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import { AcademicLevel, sortAcademicLevels } from "@/lib/calendar-access";
 
@@ -29,8 +29,8 @@ function dateRange(startDate?: string, endDate?: string) {
 
 export function SchoolCalendarView({ calendar, levels }: SchoolCalendarViewProps) {
     const orderedLevels = sortAcademicLevels(levels);
-    const visibleItems = (items: CalendarItem[] | undefined) =>
-        (items || []).filter(item => !item.appliesTo?.length || item.appliesTo.some(level => orderedLevels.includes(level)));
+    const itemsForLevel = (items: CalendarItem[] | undefined, level: AcademicLevel) =>
+        (items || []).filter(item => item.appliesTo?.includes(level));
 
     return (
         <div className="space-y-8">
@@ -39,9 +39,11 @@ export function SchoolCalendarView({ calendar, levels }: SchoolCalendarViewProps
                     <h1 className="text-3xl font-black tracking-tight">Calendrier scolaire</h1>
                     <p className="text-muted-foreground">Année scolaire {calendar.schoolYear || "non définie"}</p>
                 </div>
-                <Badge variant="secondary" className="uppercase tracking-widest">
-                    {orderedLevels.map(level => LEVEL_LABELS[level]).join(" · ")}
-                </Badge>
+                {orderedLevels.length > 0 && (
+                    <Badge variant="secondary" className="uppercase tracking-widest">
+                        {orderedLevels.map(level => LEVEL_LABELS[level]).join(" · ")}
+                    </Badge>
+                )}
             </div>
 
             {orderedLevels.length === 0 ? (
@@ -52,57 +54,70 @@ export function SchoolCalendarView({ calendar, levels }: SchoolCalendarViewProps
                 </Card>
             ) : (
                 <>
-                    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="space-y-4">
                         {orderedLevels.map(level => (
-                            <Card key={level}>
-                                <CardHeader>
-                                    <CardTitle>{LEVEL_LABELS[level]}</CardTitle>
-                                    <CardDescription>Périodes pédagogiques</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    {(calendar[level]?.periods || []).map((period: Period) => (
-                                        <div key={period.id} className="rounded-xl border p-3">
-                                            <div className="flex items-center justify-between gap-2">
-                                                <span className="font-semibold">{period.name}</span>
-                                                {period.isActive && <Badge variant="default">Active</Badge>}
-                                            </div>
-                                            <p className="mt-1 text-xs text-muted-foreground">{dateRange(period.startDate, period.endDate)}</p>
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
+                            <details key={level} open className="group rounded-2xl border bg-card shadow-sm">
+                                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-lg font-black [&::-webkit-details-marker]:hidden">
+                                    <span>{LEVEL_LABELS[level]}</span>
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform group-open:rotate-180" />
+                                </summary>
+                                <div className="grid gap-4 border-t p-4 md:grid-cols-2 xl:grid-cols-4">
+                                    <CalendarSection title="Périodes pédagogiques" icon={<CalendarDays className="h-4 w-4" />} items={calendar[level]?.periods} periodItems />
+                                    <CalendarSection title="Vacances scolaires" icon={<Palmtree className="h-4 w-4" />} items={itemsForLevel(calendar.vacations, level)} />
+                                    <CalendarSection title="Jours spéciaux" icon={<CalendarDays className="h-4 w-4" />} items={itemsForLevel(calendar.specialDays, level)} dateOnly />
+                                    <CalendarSection title="Délibérations" icon={<Clock className="h-4 w-4" />} items={itemsForLevel(calendar.bufferPeriods, level)} />
+                                </div>
+                            </details>
                         ))}
                     </div>
 
-                    <div className="grid gap-6 lg:grid-cols-2">
-                        <CalendarItemsCard title="Jours fériés" icon={<Sun className="h-5 w-5" />} items={calendar.holidays} dateOnly />
-                        <CalendarItemsCard title="Vacances scolaires" icon={<Palmtree className="h-5 w-5" />} items={visibleItems(calendar.vacations)} />
-                        <CalendarItemsCard title="Jours spéciaux" icon={<CalendarDays className="h-5 w-5" />} items={visibleItems(calendar.specialDays)} dateOnly />
-                        <CalendarItemsCard title="Délibérations" icon={<Clock className="h-5 w-5" />} items={visibleItems(calendar.bufferPeriods)} />
-                    </div>
+                    <details open className="group rounded-2xl border bg-card shadow-sm">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-lg font-black [&::-webkit-details-marker]:hidden">
+                            <span className="flex items-center gap-2"><Sun className="h-5 w-5" /> Jours fériés</span>
+                            <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform group-open:rotate-180" />
+                        </summary>
+                        <div className="border-t p-4">
+                            <CalendarSection title="Commun à tous les niveaux" items={calendar.holidays} dateOnly />
+                        </div>
+                    </details>
                 </>
             )}
         </div>
     );
 }
 
-function CalendarItemsCard({ title, icon, items, dateOnly = false }: { title: string; icon: React.ReactNode; items?: CalendarItem[]; dateOnly?: boolean }) {
+function CalendarSection({ title, icon, items, dateOnly = false, periodItems = false }: {
+    title: string;
+    icon?: React.ReactNode;
+    items?: (CalendarItem | Period)[];
+    dateOnly?: boolean;
+    periodItems?: boolean;
+}) {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">{icon}{title}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                {!items?.length ? <p className="text-sm text-muted-foreground">Aucun élément configuré.</p> : items.map(item => (
-                    <div key={item.id} className="rounded-xl border p-3">
+        <div className="rounded-xl border bg-muted/20 p-3">
+            <div className="mb-3 flex items-center gap-2 text-sm font-bold">{icon}{title}</div>
+            <div className="space-y-2">
+                {!items?.length ? <p className="text-xs text-muted-foreground">Aucun élément configuré.</p> : items.map(item => (
+                    <div key={item.id} className="rounded-xl border bg-card p-3">
                         <div className="flex items-center justify-between gap-2">
                             <span className="font-semibold">{item.name || "Sans nom"}</span>
-                            {item.status && <Badge variant={item.status === "off" ? "destructive" : "secondary"}>{item.status === "off" ? "Chômé" : "Ouvré"}</Badge>}
+                            {!periodItems && "status" in item && item.status && (
+                                <Badge variant={item.status === "off" ? "destructive" : "secondary"}>
+                                    {item.status === "off" ? "Chômé" : "Ouvré"}
+                                </Badge>
+                            )}
+                            {periodItems && "isActive" in item && item.isActive && <Badge variant="default">Active</Badge>}
                         </div>
-                        <p className="mt-1 text-xs text-muted-foreground">{dateOnly ? dateRange(item.date, undefined) : dateRange(item.startDate, item.endDate)}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            {periodItems
+                                ? dateRange(item.startDate, item.endDate)
+                                : dateOnly
+                                    ? dateRange((item as CalendarItem).date, undefined)
+                                    : dateRange(item.startDate, item.endDate)}
+                        </p>
                     </div>
                 ))}
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "migrate:person-contacts": "node scripts/migrate-person-contacts.mjs",
     "audit:person-contacts": "node scripts/audit-person-contacts.mjs",
     "sync": "powershell ./sync-prod.ps1"
   },

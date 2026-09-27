@@ -2,6 +2,7 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { generateStaffNumber } from "@/lib/staff-numbering";
+import { PersonContactError, resolvePersonContact } from "@/lib/person-contact";
 import { logActivity, formatLogEntity } from "@/lib/activity-logger";
 import fs from 'fs/promises';
 import path from 'path';
@@ -87,31 +88,45 @@ export async function POST(req: NextRequest) {
 
         // Create Profile with retry loop for unique constraint collisions
         let newStaff;
-        let staffNumber;
+        let staffNumber: string | null = null;
         let attempts = 0;
         const maxAttempts = 5;
 
         while (attempts < maxAttempts) {
             try {
                 const numberingResponse = await generateStaffNumber(matricule, staffData.category, staffData.function);
-                staffNumber = numberingResponse.success ? numberingResponse.staffNumber : null;
+                staffNumber = numberingResponse.success ? numberingResponse.staffNumber || null : null;
 
-                newStaff = await db.staffProfile.create({
-                    data: {
-                        firstName: staffData.firstName,
-                        lastName: staffData.lastName,
-                        middleName: staffData.middleName,
-                        birthDate: staffData.birthDate,
-                        gender: staffData.gender,
+                newStaff = await db.$transaction(async tx => {
+                    const contact = await resolvePersonContact(tx, {
+                        schoolMatricule: matricule,
+                        role: "staff",
                         phone: staffData.phone,
-                        function: staffData.function,
-                        category: staffData.category,
-                        level: staffData.level,
-                        levels: JSON.stringify(staffData.levels || []),
-                        staffNumber,
-                        photo: photoPath,
-                        schoolMatricule: matricule
-                    }
+                        selectedId: staffData.personContactId,
+                        identity: {
+                            firstName: staffData.firstName,
+                            lastName: staffData.lastName,
+                            middleName: staffData.middleName,
+                        },
+                    });
+                    return tx.staffProfile.create({
+                        data: {
+                            personContactId: contact.id,
+                            firstName: contact.identity.firstName,
+                            lastName: contact.identity.lastName,
+                            middleName: contact.identity.middleName,
+                            birthDate: staffData.birthDate,
+                            gender: staffData.gender,
+                            phone: contact.phone,
+                            function: staffData.function,
+                            category: staffData.category,
+                            level: staffData.level,
+                            levels: JSON.stringify(staffData.levels || []),
+                            staffNumber,
+                            photo: photoPath,
+                            schoolMatricule: matricule
+                        }
+                    });
                 });
                 break;
             } catch (createError: any) {
@@ -143,7 +158,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, data: newStaff });
     } catch (error: any) {
         console.error("POST Staff Error:", error);
-        return NextResponse.json({ error: error.message || "Erreur lors de l'enregistrement" }, { status: 500 });
+        const status = error instanceof PersonContactError ? error.status : 500;
+        return NextResponse.json({ error: error.message || "Erreur lors de l'enregistrement" }, { status });
     }
 }
 
@@ -194,6 +210,28 @@ export async function PUT(req: NextRequest) {
         }
 
         await db.$transaction(async (tx: any) => {
+            const currentStaff = await tx.staffProfile.findUnique({
+                where: { id },
+                select: { schoolMatricule: true },
+            });
+            if (!currentStaff?.schoolMatricule) throw new Error("Membre du personnel introuvable.");
+            const contact = await resolvePersonContact(tx, {
+                schoolMatricule: currentStaff.schoolMatricule,
+                role: "staff",
+                phone: simpleFields.phone,
+                selectedId: simpleFields.personContactId,
+                existingRoleId: id,
+                identity: {
+                    firstName: simpleFields.firstName,
+                    lastName: simpleFields.lastName,
+                    middleName: simpleFields.middleName,
+                },
+            });
+            updateData.personContactId = contact.id;
+            updateData.phone = contact.phone;
+            updateData.firstName = contact.identity.firstName;
+            updateData.lastName = contact.identity.lastName;
+            updateData.middleName = contact.identity.middleName;
             // 1. Update the staff profile (includes assignedClassroom field)
             await tx.staffProfile.update({
                 where: { id },
@@ -248,7 +286,8 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("PUT Staff Error:", error);
-        return NextResponse.json({ error: error.message || "Erreur de mise Ã  jour" }, { status: 500 });
+        const status = error instanceof PersonContactError ? error.status : 500;
+        return NextResponse.json({ error: error.message || "Erreur de mise Ã  jour" }, { status });
     }
 }
 

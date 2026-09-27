@@ -357,6 +357,7 @@ export const GuardianDetailsDialog = ({ guardian, schoolData, isOpen, onClose }:
             {isEditing && (
                 <GuardianForm
                     initialData={guardian}
+                    matricule={schoolData?.matricule || guardian.schoolMatricule}
                     onClose={() => setIsEditing(false)}
                     onSave={handleEditSave}
                 />
@@ -414,6 +415,7 @@ export const GuardianDetailsDialog = ({ guardian, schoolData, isOpen, onClose }:
 
             {showNewGuardianForm && migratingStudent && schoolData && (
                 <GuardianForm
+                    matricule={schoolData.matricule}
                     onClose={() => setShowNewGuardianForm(false)}
                     onSave={async (data) => {
                         setIsMigrating(true);

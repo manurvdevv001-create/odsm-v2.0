@@ -619,6 +619,7 @@ export default function StudentsPage() {
 
             {showGuardianForm && schoolData && (
                 <GuardianForm
+                    matricule={schoolData.matricule}
                     onClose={() => setShowGuardianForm(false)}
                     onSave={async (data) => {
                         const { createGuardian } = await import('./actions');

@@ -5,17 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { Guardian } from '@/types';
+import { PersonPhoneField } from '@/components/person-phone-field';
 
-export const GuardianForm = ({ initialData, onClose, onSave }: { initialData?: Partial<Guardian>, onClose: () => void, onSave: (data: any) => Promise<any> }) => {
+export const GuardianForm = ({ initialData, matricule, onClose, onSave }: { initialData?: Partial<Guardian>, matricule: string, onClose: () => void, onSave: (data: any) => Promise<any> }) => {
     const [formData, setFormData] = useState({
         firstName: initialData?.firstName || '',
         lastName: initialData?.lastName || '',
+        middleName: initialData?.middleName || '',
         phone: initialData?.phone || '',
+        personContactId: initialData?.personContactId || '',
         email: initialData?.email || '',
         profession: initialData?.profession || '',
         address: initialData?.address || ''
     });
     const [isSaving, setIsSaving] = useState(false);
+    const [isConfirmedMatch, setIsConfirmedMatch] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,17 +45,34 @@ export const GuardianForm = ({ initialData, onClose, onSave }: { initialData?: P
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Nom <span className="text-red-500">*</span></Label>
-                                <Input required value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} />
+                                <Input required disabled={isConfirmedMatch} value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Postnom</Label>
+                                <Input disabled={isConfirmedMatch} value={formData.middleName} onChange={e => setFormData({ ...formData, middleName: e.target.value })} />
                             </div>
                             <div className="space-y-2">
                                 <Label>Prénom <span className="text-red-500">*</span></Label>
-                                <Input required value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} />
+                                <Input required disabled={isConfirmedMatch} value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label>Téléphone <span className="text-red-500">*</span></Label>
-                            <Input required value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
-                        </div>
+                        <PersonPhoneField
+                            matricule={matricule}
+                            value={formData.phone}
+                            selectedId={formData.personContactId}
+                            required
+                            onChange={phone => setFormData(current => ({ ...current, phone, personContactId: '' }))}
+                            onSelect={personContactId => {
+                                setFormData(current => ({ ...current, personContactId }));
+                                setIsConfirmedMatch(!!personContactId);
+                            }}
+                            onIdentityMatch={match => setFormData(current => ({
+                                ...current,
+                                firstName: match.firstName,
+                                lastName: match.lastName,
+                                middleName: match.middleName || '',
+                            }))}
+                        />
                         <div className="space-y-2">
                             <Label>Email</Label>
                             <Input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />

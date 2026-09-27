@@ -41,6 +41,7 @@ model School {
   grades             Grade[]
   gradeSubmissions   GradeSubmission[]
   guardians          Guardian[]
+  personContacts     PersonContact[]
   lessonPlans        LessonPlan[]
   licenses           License[]
   payments           Payment[]
@@ -77,6 +78,7 @@ model StaffProfile {
   lastName            String
   middleName          String?
   phone               String?
+  personContactId     String?             @unique
   gender              String
   birthDate           String?
   photo               String?
@@ -97,6 +99,7 @@ model StaffProfile {
   lessonPlans         LessonPlan[]
   user                User?               @relation(fields: [userId], references: [id])
   school              School?             @relation(fields: [schoolMatricule], references: [matricule])
+  personContact       PersonContact?       @relation(fields: [personContactId], references: [id])
   evaluationsGiven    TeacherEvaluation[] @relation("Evaluator")
   evaluationsReceived TeacherEvaluation[] @relation("TeacherEvaluated")
 }
@@ -226,8 +229,10 @@ model Enrollment {
 model Guardian {
   id              String    @id @default(uuid())
   schoolMatricule String
+  personContactId String?   @unique
   firstName       String
   lastName        String
+  middleName      String?
   phone           String
   email           String?
   profession      String?
@@ -235,7 +240,25 @@ model Guardian {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   school          School    @relation(fields: [schoolMatricule], references: [matricule])
+  personContact   PersonContact? @relation(fields: [personContactId], references: [id])
   students        Student[]
+}
+
+model PersonContact {
+  id              String        @id @default(uuid())
+  schoolMatricule String
+  phone           String?
+  lastName        String
+  middleName      String?
+  firstName       String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  school          School        @relation(fields: [schoolMatricule], references: [matricule])
+  guardian        Guardian?
+  staffProfile    StaffProfile?
+
+  @@unique([schoolMatricule, phone])
+  @@index([schoolMatricule])
 }
 
 model Grade {

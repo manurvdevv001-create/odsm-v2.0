@@ -376,11 +376,22 @@ export async function replicateSchool(sourceMatricule: string, data: { name: str
                 subjectMap.set(id, newS.id);
             }
 
-            // 4. Copy StaffProfiles & Users
+            // 4. Copy shared person identities before their staff/guardian roles
+            const personContacts = await tx.personContact.findMany({ where: { schoolMatricule: sourceMatricule } });
+            const personContactMap = new Map();
+            for (const contact of personContacts) {
+                const { id, createdAt, updatedAt, schoolMatricule, ...rest } = contact;
+                const newContact = await tx.personContact.create({
+                    data: { ...rest, schoolMatricule: newMatricule },
+                });
+                personContactMap.set(id, newContact.id);
+            }
+
+            // 5. Copy StaffProfiles & Users
             const staff = await tx.staffProfile.findMany({ where: { schoolMatricule: sourceMatricule }, include: { user: true } });
             const staffMap = new Map();
             for (const st of staff) {
-                const { id, createdAt, updatedAt, schoolMatricule, userId, user, staffNumber, ...rest } = st as any;
+                const { id, createdAt, updatedAt, schoolMatricule, userId, user, staffNumber, personContactId, ...rest } = st as any;
                 
                 let newUserId = null;
                 if (user) {
@@ -393,6 +404,7 @@ export async function replicateSchool(sourceMatricule: string, data: { name: str
                     data: { 
                         ...rest, 
                         schoolMatricule: newMatricule, 
+                        personContactId: personContactId ? personContactMap.get(personContactId) : null,
                         userId: newUserId,
                         staffNumber: staffNumber ? `${newMatricule}_${staffNumber}` : null
                     } 
@@ -400,7 +412,7 @@ export async function replicateSchool(sourceMatricule: string, data: { name: str
                 staffMap.set(id, newSt.id);
             }
 
-            // 5. Copy Classrooms
+            // 6. Copy Classrooms
             const classrooms = await tx.classroom.findMany({ where: { schoolMatricule: sourceMatricule } });
             const classroomMap = new Map();
             for (const c of classrooms) {
@@ -416,7 +428,7 @@ export async function replicateSchool(sourceMatricule: string, data: { name: str
                 classroomMap.set(id, newC.id);
             }
 
-            // 6. Copy Courses
+            // 7. Copy Courses
             const courses = await tx.course.findMany({ 
                 where: { 
                     OR: [
@@ -440,12 +452,18 @@ export async function replicateSchool(sourceMatricule: string, data: { name: str
                 courseMap.set(id, newCo.id);
             }
 
-            // 7. Copy Guardians & Students
+            // 8. Copy Guardians & Students
             const guardians = await tx.guardian.findMany({ where: { schoolMatricule: sourceMatricule } });
             const guardianMap = new Map();
             for (const gu of guardians) {
-                const { id, createdAt, updatedAt, schoolMatricule, ...rest } = gu as any;
-                const newGu = await tx.guardian.create({ data: { ...rest, schoolMatricule: newMatricule } });
+                const { id, createdAt, updatedAt, schoolMatricule, personContactId, ...rest } = gu as any;
+                const newGu = await tx.guardian.create({
+                    data: {
+                        ...rest,
+                        schoolMatricule: newMatricule,
+                        personContactId: personContactId ? personContactMap.get(personContactId) : null,
+                    },
+                });
                 guardianMap.set(id, newGu.id);
             }
 
@@ -821,7 +839,9 @@ export async function deleteSchool(matricule: string) {
             prisma.schoolYearSettings.deleteMany({ where: { schoolMatricule: matricule } }),
             // 27. Licences
             prisma.license.deleteMany({ where: { schoolMatricule: matricule } }),
-            // 28. École elle-même
+            // 28. Identités partagées entre profils de personnel et tuteurs
+            prisma.personContact.deleteMany({ where: { schoolMatricule: matricule } }),
+            // 29. École elle-même
             prisma.school.delete({ where: { matricule } })
         ]);
 
@@ -860,6 +880,7 @@ export async function resetSchoolData(matricule: string) {
             prisma.classVisit.deleteMany({ where: { schoolMatricule: matricule } }),
             prisma.teacherEvaluation.deleteMany({ where: { schoolMatricule: matricule } }),
             prisma.staffProfile.deleteMany({ where: { schoolMatricule: matricule } }),
+            prisma.personContact.deleteMany({ where: { schoolMatricule: matricule } }),
             prisma.user.deleteMany({ where: { id: { in: userIds } } }),
             prisma.activityLog.deleteMany({ where: { schoolMatricule: matricule } }),
             // We keep the school record, classrooms, subjects, grades (the "structure")

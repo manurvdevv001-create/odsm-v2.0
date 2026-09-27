@@ -5,6 +5,7 @@ import { assertStudentInActiveYear, getActiveYearForSchool } from '@/lib/year-gu
 import { Payment, Student, Guardian } from "@/types";
 import { revalidatePath } from "next/cache";
 import { logActivity } from "@/lib/activity-logger";
+import { resolvePersonContact } from "@/lib/person-contact";
 
 
 
@@ -144,14 +145,29 @@ export async function saveStudentData(matricule: string, studentData: any, payme
 
         // If inline guardian creation is requested
         if (studentData.guardianId === 'new') {
-            const newGuardian = await db.guardian.create({
-                data: {
+            const newGuardian = await db.$transaction(async tx => {
+                const contact = await resolvePersonContact(tx, {
                     schoolMatricule: matricule,
-                    firstName: studentData.guardianFirstName,
-                    lastName: studentData.guardianLastName,
+                    role: "guardian",
                     phone: studentData.guardianPhone,
-                    address: studentData.guardianAddress
-                }
+                    selectedId: studentData.guardianPersonContactId,
+                    identity: {
+                        firstName: studentData.guardianFirstName,
+                        lastName: studentData.guardianLastName,
+                        middleName: studentData.guardianMiddleName,
+                    },
+                });
+                return tx.guardian.create({
+                    data: {
+                        schoolMatricule: matricule,
+                        personContactId: contact.id,
+                        firstName: contact.identity.firstName,
+                        lastName: contact.identity.lastName,
+                        middleName: contact.identity.middleName,
+                        phone: contact.phone!,
+                        address: studentData.guardianAddress,
+                    },
+                });
             });
             finalGuardianId = newGuardian.id;
         }
@@ -390,16 +406,31 @@ export async function createGuardian(matricule: string, guardianData: Partial<Gu
         if (!guardianData.firstName || !guardianData.lastName || !guardianData.phone || !guardianData.address) {
             throw new Error("Nom, prénom, téléphone et adresse sont obligatoires pour le tuteur.");
         }
-        const newGuardian = await db.guardian.create({
-            data: {
+        const newGuardian = await db.$transaction(async tx => {
+            const contact = await resolvePersonContact(tx, {
                 schoolMatricule: matricule,
-                firstName: guardianData.firstName,
-                lastName: guardianData.lastName,
+                role: "guardian",
                 phone: guardianData.phone,
-                email: guardianData.email || null,
-                profession: guardianData.profession || null,
-                address: guardianData.address
-            }
+                selectedId: guardianData.personContactId,
+                identity: {
+                    firstName: guardianData.firstName!,
+                    lastName: guardianData.lastName!,
+                    middleName: guardianData.middleName,
+                },
+            });
+            return tx.guardian.create({
+                data: {
+                    schoolMatricule: matricule,
+                    personContactId: contact.id,
+                    firstName: contact.identity.firstName,
+                    lastName: contact.identity.lastName,
+                    middleName: contact.identity.middleName,
+                    phone: contact.phone!,
+                    email: guardianData.email || null,
+                    profession: guardianData.profession || null,
+                    address: guardianData.address!,
+                },
+            });
         });
         await logActivity(matricule, `Nouveau tuteur ajouté: ${guardianData.firstName} ${guardianData.lastName}`, executorName);
         return { success: true, data: newGuardian };
@@ -642,16 +673,32 @@ export async function updateGuardian(matricule: string, guardianId: string, guar
             throw new Error("Action interdite : ce tuteur est lié à des élèves d'années archivées et ne peut être modifié.");
         }
 
-        await db.guardian.update({
-            where: { id: guardianId },
-            data: {
-                firstName: guardianData.firstName,
-                lastName: guardianData.lastName,
+        await db.$transaction(async tx => {
+            const contact = await resolvePersonContact(tx, {
+                schoolMatricule: matricule,
+                role: "guardian",
                 phone: guardianData.phone,
-                email: guardianData.email || null,
-                profession: guardianData.profession || null,
-                address: guardianData.address
-            }
+                selectedId: guardianData.personContactId,
+                existingRoleId: guardianId,
+                identity: {
+                    firstName: guardianData.firstName!,
+                    lastName: guardianData.lastName!,
+                    middleName: guardianData.middleName,
+                },
+            });
+            await tx.guardian.update({
+                where: { id: guardianId },
+                data: {
+                    personContactId: contact.id,
+                    firstName: contact.identity.firstName,
+                    lastName: contact.identity.lastName,
+                    middleName: contact.identity.middleName,
+                    phone: contact.phone!,
+                    email: guardianData.email || null,
+                    profession: guardianData.profession || null,
+                    address: guardianData.address,
+                },
+            });
         });
         await logActivity(matricule, `Mise à jour des informations du tuteur : ${guardianData.firstName} ${guardianData.lastName}`, executorName);
         return { success: true };
@@ -674,16 +721,31 @@ export async function updateStudentGuardian(matricule: string, studentId: string
              if (!newGuardianData.firstName || !newGuardianData.lastName || !newGuardianData.phone || !newGuardianData.address) {
                 throw new Error("Nom, prénom, téléphone et adresse sont obligatoires pour le nouveau tuteur.");
             }
-            const newGuardian = await db.guardian.create({
-                data: {
+            const newGuardian = await db.$transaction(async tx => {
+                const contact = await resolvePersonContact(tx, {
                     schoolMatricule: matricule,
-                    firstName: newGuardianData.firstName,
-                    lastName: newGuardianData.lastName,
+                    role: "guardian",
                     phone: newGuardianData.phone,
-                    email: newGuardianData.email || null,
-                    profession: newGuardianData.profession || null,
-                    address: newGuardianData.address
-                }
+                    selectedId: newGuardianData.personContactId,
+                    identity: {
+                        firstName: newGuardianData.firstName!,
+                        lastName: newGuardianData.lastName!,
+                        middleName: newGuardianData.middleName,
+                    },
+                });
+                return tx.guardian.create({
+                    data: {
+                        schoolMatricule: matricule,
+                        personContactId: contact.id,
+                        firstName: contact.identity.firstName,
+                        lastName: contact.identity.lastName,
+                        middleName: contact.identity.middleName,
+                        phone: contact.phone!,
+                        email: newGuardianData.email || null,
+                        profession: newGuardianData.profession || null,
+                        address: newGuardianData.address!,
+                    },
+                });
             });
             finalGuardianId = newGuardian.id;
             await logActivity(matricule, `Nouveau tuteur ajouté lors de la migration: ${newGuardianData.firstName} ${newGuardianData.lastName}`, executorName);

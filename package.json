@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "audit:person-contacts": "node scripts/audit-person-contacts.mjs",
     "sync": "powershell ./sync-prod.ps1"
   },
   "dependencies": {
@@ -38,6 +39,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.34.2",
+    "libphonenumber-js": "^1.13.14",
     "lucide-react": "^0.574.0",
     "next": "16.1.6",
     "next-themes": "^0.4.6",

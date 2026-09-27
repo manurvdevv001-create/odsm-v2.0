@@ -7,8 +7,10 @@ export type AcademicLevel = 'maternelle' | 'primaire' | 'secondaire';
 export interface Guardian {
     id: string;
     schoolMatricule: string;
+    personContactId?: string | null;
     firstName: string;
     lastName: string;
+    middleName?: string | null;
     phone: string;
     email?: string;
     profession?: string;

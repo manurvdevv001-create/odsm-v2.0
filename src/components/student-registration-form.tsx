@@ -44,6 +44,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import type { SchoolData, Payment } from '@/types';
 import { getAllGrades, getClassroomsByLevel, getClassroomsByGrade } from '@/lib/classroom-utils';
 import { Combobox } from '@/components/ui/combobox';
+import { PersonPhoneField } from '@/components/person-phone-field';
 
 interface StudentRegistrationFormProps {
   schoolData: SchoolData | null;
@@ -65,7 +66,9 @@ export default function StudentRegistrationForm({ schoolData, onClose, onSave }:
     guardianId: 'new', // 'new' or existing id
     guardianFirstName: '',
     guardianLastName: '',
+    guardianMiddleName: '',
     guardianPhone: '',
+    guardianPersonContactId: '',
     guardianAddress: '',
   });
   const [paymentForm, setPaymentForm] = useState({
@@ -374,16 +377,30 @@ export default function StudentRegistrationForm({ schoolData, onClose, onSave }:
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="guardianLastName">Nom tuteur <span className="text-destructive">*</span></Label>
-                        <Input id="guardianLastName" name="guardianLastName" required value={formData.guardianLastName} onChange={handleInputChange} />
+                        <Input id="guardianLastName" name="guardianLastName" required disabled={!!formData.guardianPersonContactId} value={formData.guardianLastName} onChange={handleInputChange} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="guardianMiddleName">Postnom tuteur</Label>
+                        <Input id="guardianMiddleName" name="guardianMiddleName" disabled={!!formData.guardianPersonContactId} value={formData.guardianMiddleName} onChange={handleInputChange} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="guardianFirstName">Prénom tuteur <span className="text-destructive">*</span></Label>
-                        <Input id="guardianFirstName" name="guardianFirstName" required value={formData.guardianFirstName} onChange={handleInputChange} />
+                        <Input id="guardianFirstName" name="guardianFirstName" required disabled={!!formData.guardianPersonContactId} value={formData.guardianFirstName} onChange={handleInputChange} />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="guardianPhone">Téléphone <span className="text-destructive">*</span></Label>
-                        <Input id="guardianPhone" name="guardianPhone" required value={formData.guardianPhone} onChange={handleInputChange} />
-                      </div>
+                      <PersonPhoneField
+                        matricule={schoolData?.matricule || ""}
+                        value={formData.guardianPhone}
+                        selectedId={formData.guardianPersonContactId}
+                        required
+                        onChange={guardianPhone => setFormData(current => ({ ...current, guardianPhone, guardianPersonContactId: "" }))}
+                        onSelect={guardianPersonContactId => setFormData(current => ({ ...current, guardianPersonContactId }))}
+                        onIdentityMatch={match => setFormData(current => ({
+                          ...current,
+                          guardianFirstName: match.firstName,
+                          guardianLastName: match.lastName,
+                          guardianMiddleName: match.middleName || "",
+                        }))}
+                      />
                       <div className="space-y-2">
                         <Label htmlFor="guardianAddress">Adresse physique <span className="text-destructive">*</span></Label>
                         <Input id="guardianAddress" name="guardianAddress" required value={formData.guardianAddress} onChange={handleInputChange} />

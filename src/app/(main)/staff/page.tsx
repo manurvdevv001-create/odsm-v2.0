@@ -229,6 +229,7 @@ export default function StaffPage() {
         <div className="flex flex-col gap-8">
             {showForm ? (
                 <StaffRegistrationForm
+                    matricule={typedSchoolData.matricule}
                     activeLevels={activeLevels}
                     classrooms={allClassrooms}
                     onClose={() => setShowForm(false)}

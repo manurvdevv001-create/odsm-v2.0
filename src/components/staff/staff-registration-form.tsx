@@ -15,15 +15,17 @@ import { toast } from 'sonner';
 import Image from 'next/image';
 import type { StaffProfile, AcademicLevel } from '@/types';
 import { STAFF_CATEGORIES, STAFF_FUNCTIONS } from '@/lib/staff-definitions';
+import { PersonPhoneField } from '@/components/person-phone-field';
 
 interface StaffRegistrationFormProps {
+    matricule: string;
     activeLevels: AcademicLevel[];
     classrooms: string[];
     onClose: () => void;
     onSave: (staffData: any) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function StaffRegistrationForm({ activeLevels, classrooms, onClose, onSave }: StaffRegistrationFormProps) {
+export function StaffRegistrationForm({ matricule, activeLevels, classrooms, onClose, onSave }: StaffRegistrationFormProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [photo, setPhoto] = useState<string | null>(null);
     const [selectedLevels, setSelectedLevels] = useState<AcademicLevel[]>([]);
@@ -36,6 +38,7 @@ export function StaffRegistrationForm({ activeLevels, classrooms, onClose, onSav
         birthDate: '',
         gender: 'M',
         phone: '',
+        personContactId: '',
         function: '',
         category: '',
         level: undefined,
@@ -200,20 +203,29 @@ export function StaffRegistrationForm({ activeLevels, classrooms, onClose, onSav
                     <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="lastName">Nom *</Label>
-                            <Input id="lastName" name="lastName" required value={formData.lastName} onChange={handleInputChange} />
+                            <Input id="lastName" name="lastName" required disabled={!!formData.personContactId} value={formData.lastName} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="middleName">Postnom</Label>
-                            <Input id="middleName" name="middleName" value={formData.middleName} onChange={handleInputChange} />
+                            <Input id="middleName" name="middleName" disabled={!!formData.personContactId} value={formData.middleName} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="firstName">Prénom *</Label>
-                            <Input id="firstName" name="firstName" required value={formData.firstName} onChange={handleInputChange} />
+                            <Input id="firstName" name="firstName" required disabled={!!formData.personContactId} value={formData.firstName} onChange={handleInputChange} />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="phone">Téléphone</Label>
-                            <Input id="phone" name="phone" placeholder="0812345678" value={formData.phone} onChange={handleInputChange} />
-                        </div>
+                        <PersonPhoneField
+                            matricule={matricule}
+                            value={formData.phone || ''}
+                            selectedId={formData.personContactId || ''}
+                            onChange={phone => setFormData(current => ({ ...current, phone, personContactId: '' }))}
+                            onSelect={personContactId => setFormData(current => ({ ...current, personContactId }))}
+                            onIdentityMatch={match => setFormData(current => ({
+                                ...current,
+                                firstName: match.firstName,
+                                lastName: match.lastName,
+                                middleName: match.middleName || '',
+                            }))}
+                        />
                         <div className="space-y-2">
                             <Label htmlFor="birthDate">Date de naissance *</Label>
                             <DatePicker

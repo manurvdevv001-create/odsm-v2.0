@@ -94,7 +94,7 @@ export default function GradeGridPage() {
             if (periodId && periodId !== "all") {
                 url += `&periodId=${periodId}`;
             }
-            const res = await fetch(url);
+            const res = await fetch(url, { cache: "no-store" });
             if (res.ok) {
                 const data = await res.json();
                 // Confirmed assessments remain visible so their maxima and weights

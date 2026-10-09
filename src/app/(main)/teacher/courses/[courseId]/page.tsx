@@ -236,7 +236,7 @@ export default function CourseDetailPage() {
             if (selectedPeriodId && selectedPeriodId !== "all") {
                 url += `&periodId=${selectedPeriodId}`;
             }
-            const res = await fetch(url);
+            const res = await fetch(url, { cache: "no-store" });
             if (res.ok) {
                 const data = await res.json();
                 setAssessments(data.assessments || []);

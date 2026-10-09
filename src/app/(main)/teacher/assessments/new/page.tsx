@@ -363,7 +363,7 @@ export default function NewAssessmentPage() {
             try {
                 // Fetch all assessments for this course, then find ours by editId
                 const courseParam = searchParams.get("courseId") || "";
-                const res = await fetch(`/api/teacher/grades?courseId=${courseParam}&classroomId=${targetClassroomId}&matricule=${schoolData?.matricule}`);
+                const res = await fetch(`/api/teacher/grades?courseId=${courseParam}&classroomId=${targetClassroomId}&matricule=${schoolData?.matricule}`, { cache: "no-store" });
                 if (res.ok) {
                     const data = await res.json();
                     const list = data.assessments || [];
@@ -603,6 +603,7 @@ export default function NewAssessmentPage() {
                         date,
                         maxScore,
                         pondere: pondere || maxScore,
+                        periodId: finalPeriodId,
                         results: formattedResults
                     })
                 });

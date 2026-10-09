@@ -88,7 +88,7 @@ export default function GradeAggregatesPage() {
             if (!courseId || !classroomName) return;
             setIsFetching(true);
             try {
-                const res = await fetch(`/api/teacher/grades?courseId=${courseId}&classroomId=${classroomName}&matricule=${schoolData?.matricule}`);
+                const res = await fetch(`/api/teacher/grades?courseId=${courseId}&classroomId=${classroomName}&matricule=${schoolData?.matricule}`, { cache: "no-store" });
                 if (res.ok) {
                     const data = await res.json();
                     setAssessments(data.assessments || []);

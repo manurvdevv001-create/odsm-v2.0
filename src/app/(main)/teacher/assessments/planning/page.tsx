@@ -140,7 +140,7 @@ export default function AssessmentPlanningPage() {
                 periodId: selectedPeriodId,
                 matricule: schoolData.matricule
             });
-            const response = await fetch(`/api/teacher/grades?${params}`);
+            const response = await fetch(`/api/teacher/grades?${params}`, { cache: "no-store" });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Chargement impossible.");
             setAssessments(data.assessments || []);

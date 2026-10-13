@@ -26,6 +26,7 @@ import { getInitials, matchTeacherName } from "@/lib/utils";
 import { toast } from "sonner";
 import { SmartStudentName } from "@/components/ui/SmartStudentName";
 import { useStudentDisplay } from "@/components/providers/StudentDisplayProvider";
+import { sortStudentList, StudentSortOption } from "@/lib/student-sort";
 
 type AttendanceStatus = "PRESENT" | "ABSENCE" | "LATE";
 
@@ -36,6 +37,7 @@ export default function AttendancePage() {
     const [selectedClassroomName, setSelectedClassroomName] = useState("");
     const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [sortOption, setSortOption] = useState<StudentSortOption>("alpha-asc");
 
     const assignedCourses = useMemo(() => {
         try {
@@ -84,21 +86,71 @@ export default function AttendancePage() {
         ) || [];
     }, [schoolData, selectedClassroomName]);
 
+    const sortedStudents = useMemo(() => {
+        return sortStudentList(students, sortOption);
+    }, [students, sortOption]);
+
+    // Charger les pointages déjà enregistrés pour la date et la classe sélectionnées
     useEffect(() => {
-        if (students.length > 0 && Object.keys(attendance).length === 0) {
-            const initial: Record<string, AttendanceStatus> = {};
-            students.forEach(s => initial[s.id] = "PRESENT");
-            setAttendance(initial);
-        }
-    }, [students, attendance]);
+        if (!selectedClassroomName || students.length === 0) return;
+
+        let isSubscribed = true;
+        const fetchAttendance = async () => {
+            try {
+                const res = await fetch(`/api/teacher/attendance?classroomId=${encodeURIComponent(selectedClassroomName)}&date=${date}`);
+                if (res.ok) {
+                    const existingRecords: any[] = await res.json();
+                    if (isSubscribed) {
+                        const newAttendance: Record<string, AttendanceStatus> = {};
+                        // Par défaut tous sont présents
+                        students.forEach((s: any) => {
+                            newAttendance[s.id] = "PRESENT";
+                        });
+                        // Appliquer les statuts enregistrés
+                        existingRecords.forEach((record: any) => {
+                            if (newAttendance[record.studentId] !== undefined) {
+                                newAttendance[record.studentId] = record.type as AttendanceStatus;
+                            }
+                        });
+                        setAttendance(newAttendance);
+                    }
+                } else {
+                    // Fallback par défaut si pas de pointage trouvé
+                    if (isSubscribed) {
+                        const initial: Record<string, AttendanceStatus> = {};
+                        students.forEach((s: any) => { initial[s.id] = "PRESENT"; });
+                        setAttendance(initial);
+                    }
+                }
+            } catch (err) {
+                console.error("Erreur lors de la récupération des présences:", err);
+            }
+        };
+
+        fetchAttendance();
+
+        return () => {
+            isSubscribed = false;
+        };
+    }, [date, selectedClassroomName, students]);
 
     const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
         setAttendance(prev => ({ ...prev, [studentId]: status }));
     };
 
     const handleSave = async () => {
+        if (!selectedClassroomName) {
+            toast.error("Veuillez sélectionner un local / classe.");
+            return;
+        }
+
         setIsSaving(true);
         try {
+            const effectiveMatricule = 
+                schoolData?.matricule || 
+                user?.schoolMatricule || 
+                (typeof window !== "undefined" ? localStorage.getItem("odsm-matricule") : null);
+
             const records = Object.entries(attendance).map(([studentId, type]) => ({
                 studentId,
                 type,
@@ -113,16 +165,20 @@ export default function AttendancePage() {
                     classroomId: selectedClassroomName, 
                     classroomName: selectedClassroomName,
                     records,
-                    schoolMatricule: schoolData?.matricule
+                    schoolMatricule: effectiveMatricule,
+                    matricule: effectiveMatricule
                 })
             });
 
-            if (res.ok) {
+            const data = await res.json();
+
+            if (res.ok && data.success) {
                 toast.success("Pointage de présence enregistré !");
             } else {
-                toast.error("Erreur lors de l'enregistrement.");
+                toast.error(data.error || "Erreur lors de l'enregistrement.");
             }
-        } catch (error) {
+        } catch (error: any) {
+            console.error("Erreur save attendance:", error);
             toast.error("Erreur de connexion.");
         } finally {
             setIsSaving(false);
@@ -167,13 +223,28 @@ export default function AttendancePage() {
                             value={globalDisplayMode} 
                             onValueChange={(v: any) => setGlobalDisplayMode(v)}
                         >
-                            <SelectTrigger className="w-[140px] h-8 rounded-xl border-border/50 text-sm">
+                            <SelectTrigger className="w-[130px] h-8 rounded-xl border-border/50 text-xs">
                                 <SelectValue placeholder="Affichage" />
                             </SelectTrigger>
                             <SelectContent className="rounded-xl">
                                 <SelectItem value="compact">Noms Courts</SelectItem>
                                 <SelectItem value="full">Noms Complets</SelectItem>
                                 <SelectItem value="id">Avec Matricule</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select 
+                            value={sortOption} 
+                            onValueChange={(v: any) => setSortOption(v)}
+                        >
+                            <SelectTrigger className="w-[145px] h-8 rounded-xl border-border/50 text-xs font-semibold">
+                                <SelectValue placeholder="Tri" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="alpha-asc">Nom (A → Z)</SelectItem>
+                                <SelectItem value="alpha-desc">Nom (Z → A)</SelectItem>
+                                <SelectItem value="matricule-asc">Matricule (Croissant)</SelectItem>
+                                <SelectItem value="matricule-desc">Matricule (Décroissant)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -218,7 +289,7 @@ export default function AttendancePage() {
                     <p className="text-xs text-muted-foreground mt-0.5">Cochez le statut de chaque élève</p>
                 </div>
                 <div className="divide-y divide-border/30">
-                    {students.map((student: any) => (
+                    {sortedStudents.map((student: any) => (
                         <div key={student.id} className="flex items-center justify-between p-4 hover:bg-muted/20 transition-colors">
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-9 w-9 border border-border/30">

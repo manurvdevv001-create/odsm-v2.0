@@ -13,8 +13,8 @@ export async function GET(req: NextRequest) {
 
     try {
         const date = new Date(dateStr);
-        const startOfDay = new Date(date.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+        const startOfDay = new Date(new Date(date).setHours(0, 0, 0, 0));
+        const endOfDay = new Date(new Date(date).setHours(23, 59, 59, 999));
 
         const records = await db.disciplineRecord.findMany({
             where: {
@@ -26,9 +26,7 @@ export async function GET(req: NextRequest) {
                     in: ["ABSENCE", "LATE"]
                 },
                 student: {
-                    classroomName: {
-                        not: null // This is a bit weak, better link is needed
-                    }
+                    classroomName: classroomId
                 }
             },
             include: {
@@ -49,38 +47,50 @@ export async function POST(req: NextRequest) {
         const { 
             date, 
             classroomId, 
+            classroomName,
             records, // Array of { studentId, type: 'ABSENCE' | 'LATE' | 'PRESENT', description }
-            schoolMatricule
+            schoolMatricule: rawSchoolMatricule,
+            matricule: rawMatricule
         } = body;
 
-        if (!date || !schoolMatricule || !records) {
-            return NextResponse.json({ error: "Données manquantes" }, { status: 400 });
+        const targetClassroom = classroomName || classroomId;
+        const schoolMatricule = rawSchoolMatricule || rawMatricule;
+
+        if (!date || !records || !targetClassroom) {
+            return NextResponse.json({ error: "Données requises manquantes (date, classroomId ou records)" }, { status: 400 });
         }
 
         const attendanceDate = new Date(date);
 
         await db.$transaction(async (tx: any) => {
-            // 1. Delete existing records for this day to avoid duplicates if re-submitting
+            // Identifier les élèves de la classe
+            const classStudents = await tx.student.findMany({
+                where: { classroomName: targetClassroom },
+                select: { id: true, schoolMatricule: true }
+            });
+            const studentIds = classStudents.map((s: any) => s.id);
+            
+            // Déterminer le matricule école effectif
+            const resolvedMatricule = schoolMatricule || classStudents[0]?.schoolMatricule;
+            if (!resolvedMatricule) {
+                throw new Error("Matricule de l'établissement introuvable pour enregistrer le pointage.");
+            }
+
+            // 1. Supprimer les pointages existants pour ce jour afin d'éviter les doublons lors des re-soumissions
             const startOfDay = new Date(new Date(attendanceDate).setHours(0, 0, 0, 0));
             const endOfDay = new Date(new Date(attendanceDate).setHours(23, 59, 59, 999));
 
-            // We only delete ABSENCE and LATE records for this specific class's students
-            // Since we don't have a direct link to classroom in DisciplineRecord, we filter by students
-            const classStudents = await tx.student.findMany({
-                where: { classroomName: body.classroomName }, // Pass classroomName in body
-                select: { id: true }
-            });
-            const studentIds = classStudents.map((s: any) => s.id);
+            if (studentIds.length > 0) {
+                await tx.disciplineRecord.deleteMany({
+                    where: {
+                        studentId: { in: studentIds },
+                        date: { gte: startOfDay, lte: endOfDay },
+                        type: { in: ["ABSENCE", "LATE"] }
+                    }
+                });
+            }
 
-            await tx.disciplineRecord.deleteMany({
-                where: {
-                    studentId: { in: studentIds },
-                    date: { gte: startOfDay, lte: endOfDay },
-                    type: { in: ["ABSENCE", "LATE"] }
-                }
-            });
-
-            // 2. Insert new records for non-PRESENT students
+            // 2. Insérer les nouveaux enregistrements pour les élèves non présents (ABSENCE ou LATE)
             const recordsToInsert = records
                 .filter((r: any) => r.type !== "PRESENT")
                 .map((r: any) => ({
@@ -88,8 +98,8 @@ export async function POST(req: NextRequest) {
                     type: r.type,
                     severity: "LOW",
                     date: attendanceDate,
-                    description: r.description || (r.type === "ABSENCE" ? "Absent en classe" : "Retard en classe"),
-                    schoolMatricule: schoolMatricule,
+                    description: r.description || (r.type === "ABSENCE" ? "Absent à l'appel" : "Arrivé en retard"),
+                    schoolMatricule: resolvedMatricule,
                     status: "RESOLVED"
                 }));
 

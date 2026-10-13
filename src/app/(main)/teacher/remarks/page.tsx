@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { getInitials, matchTeacherName } from "@/lib/utils";
 import { toast } from "sonner";
+import { sortStudentList } from "@/lib/student-sort";
 import { 
     Dialog, 
     DialogContent, 
@@ -73,7 +74,8 @@ export default function RemarksPage() {
 
     const students = useMemo(() => {
         if (!selectedClassroomName) return [];
-        return (schoolData?.students as any[])?.filter((s: any) => s.classroomName === selectedClassroomName) || [];
+        const list = (schoolData?.students as any[])?.filter((s: any) => s.classroomName === selectedClassroomName) || [];
+        return sortStudentList(list, "alpha-asc");
     }, [schoolData, selectedClassroomName]);
 
     const fetchRemarks = async () => {
@@ -160,7 +162,11 @@ export default function RemarksPage() {
                                     <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
                                         <SelectTrigger id="student" className="rounded-xl"><SelectValue placeholder="Choisir un élève..." /></SelectTrigger>
                                         <SelectContent className="rounded-xl">
-                                            {students.map((s: any) => (<SelectItem key={s.id} value={s.id}>{s.lastName} {s.firstName}</SelectItem>))}
+                                            {students.map((s: any) => (
+                                                <SelectItem key={s.id} value={s.id}>
+                                                    {s.lastName} {s.middleName ? `${s.middleName} ` : ''}{s.firstName} {s.matricule ? `(${s.matricule})` : ''}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>

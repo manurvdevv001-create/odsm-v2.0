@@ -34,6 +34,7 @@ import { SmartStudentName } from "@/components/ui/SmartStudentName";
 import { useStudentDisplay } from "@/components/providers/StudentDisplayProvider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Printer } from "lucide-react";
+import { sortStudentList, StudentSortOption } from "@/lib/student-sort";
 
 interface BulkAssignmentPanelProps {
     classroomName: string;
@@ -63,6 +64,11 @@ export default function BulkAssignmentPanel({
     const [assignSearch, setAssignSearch] = useState("");
     
     const { globalDisplayMode, setGlobalDisplayMode } = useStudentDisplay();
+    const [sortOption, setSortOption] = useState<StudentSortOption>("alpha-asc");
+
+    const sortedStudents = useMemo(() => {
+        return sortStudentList(students, sortOption);
+    }, [students, sortOption]);
 
     // Waiting list: active students with no classroom + students pending enrollment (new year)
     const waitingListStudents = useMemo((): Student[] => {
@@ -188,13 +194,27 @@ export default function BulkAssignmentPanel({
                                 value={globalDisplayMode} 
                                 onValueChange={(v: any) => setGlobalDisplayMode(v)}
                             >
-                                <SelectTrigger className="w-[140px] h-9 rounded-xl border-border/50 text-sm">
+                                <SelectTrigger className="w-[130px] h-9 rounded-xl border-border/50 text-xs">
                                     <SelectValue placeholder="Affichage" />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-xl">
                                     <SelectItem value="compact">Noms Courts</SelectItem>
                                     <SelectItem value="full">Noms Complets</SelectItem>
                                     <SelectItem value="id">Avec Matricule</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Select 
+                                value={sortOption} 
+                                onValueChange={(v: any) => setSortOption(v)}
+                            >
+                                <SelectTrigger className="w-[145px] h-9 rounded-xl border-border/50 text-xs font-semibold">
+                                    <SelectValue placeholder="Tri" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value="alpha-asc">Nom (A → Z)</SelectItem>
+                                    <SelectItem value="alpha-desc">Nom (Z → A)</SelectItem>
+                                    <SelectItem value="matricule-asc">Matricule (Croissant)</SelectItem>
+                                    <SelectItem value="matricule-desc">Matricule (Décroissant)</SelectItem>
                                 </SelectContent>
                             </Select>
                             <Button
@@ -266,17 +286,17 @@ export default function BulkAssignmentPanel({
                                     <TableRow className="bg-muted/50 hover:bg-muted/50">
                                         <TableHead className="w-10">
                                             <Checkbox
-                                                checked={selectedForUnassign.size === students.length && students.length > 0}
+                                                checked={selectedForUnassign.size === sortedStudents.length && sortedStudents.length > 0}
                                                 onCheckedChange={toggleAllUnassign}
                                             />
                                         </TableHead>
                                         <TableHead className="w-12 font-bold">#</TableHead>
-                                        <TableHead className="font-bold">Nom Complet</TableHead>
+                                        <TableHead className="font-bold">Nom de l&apos;Élève</TableHead>
                                         <TableHead className="text-right font-bold">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {students.map((student, idx) => (
+                                    {sortedStudents.map((student, idx) => (
                                         <TableRow
                                             key={student.id}
                                             className={`group hover:bg-muted/30 ${selectedForUnassign.has(student.id) ? "bg-red-50/50 dark:bg-red-950/20" : ""}`}

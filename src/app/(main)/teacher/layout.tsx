@@ -11,12 +11,19 @@ import {
     FileText, 
     Trophy,
     Star,
-    HelpCircle
+    HelpCircle,
+    MoreHorizontal
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function TeacherLayout({
     children,
@@ -194,14 +201,14 @@ export default function TeacherLayout({
             {/* ── Mobile Bottom Navigation Dock (Stitch floating glass dock) ── */}
             <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-3 pb-3 pt-0">
                 <div className="glass-dock flex items-center justify-around px-2 py-2 mx-auto max-w-lg">
-                    {baseNavItems.slice(0, 5).map((item: any) => {
+                    {baseNavItems.slice(0, 4).map((item: any) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
                             <Link
                                 key={item.href}
                                 href={item.disabled ? "#" : item.href}
                                 className={cn(
-                                    "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-300 min-w-[3.5rem]",
+                                    "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-300 min-w-[3.2rem]",
                                     isActive 
                                         ? "text-primary bg-primary/10" 
                                         : "text-muted-foreground hover:text-foreground",
@@ -215,7 +222,7 @@ export default function TeacherLayout({
                                 <span className={cn(
                                     "text-[9px] font-bold tracking-tight leading-none",
                                     isActive ? "text-primary" : ""
-                                )}>
+                                )} title={item.label}>
                                     {item.mobileLabel}
                                 </span>
                                 {isActive && (
@@ -224,6 +231,65 @@ export default function TeacherLayout({
                             </Link>
                         );
                     })}
+
+                    {/* Menu Plus pour tous les items restants (Pointage, Remarques, Guide, etc.) */}
+                    {baseNavItems.length > 4 && (() => {
+                        const overflowItems = baseNavItems.slice(4);
+                        const isAnyOverflowActive = overflowItems.some((item: any) => pathname.startsWith(item.href));
+                        return (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className={cn(
+                                            "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-300 min-w-[3.2rem] cursor-pointer outline-none",
+                                            isAnyOverflowActive 
+                                                ? "text-primary bg-primary/10 font-bold" 
+                                                : "text-muted-foreground hover:text-foreground"
+                                        )}
+                                    >
+                                        <MoreHorizontal className={cn(
+                                            "h-5 w-5 transition-all duration-300",
+                                            isAnyOverflowActive ? "scale-110 text-primary" : ""
+                                        )} />
+                                        <span className={cn(
+                                            "text-[9px] font-bold tracking-tight leading-none",
+                                            isAnyOverflowActive ? "text-primary" : ""
+                                        )}>
+                                            Plus
+                                        </span>
+                                        {isAnyOverflowActive && (
+                                            <div className="w-1 h-1 rounded-full bg-primary mt-0.5 animate-in zoom-in duration-200" />
+                                        )}
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent side="top" align="end" className="w-52 p-2 rounded-2xl shadow-2xl border-primary/10 bg-background/95 backdrop-blur-md mb-2">
+                                    <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border/30 mb-1">
+                                        Autres Modules
+                                    </div>
+                                    {overflowItems.map((item: any) => {
+                                        const isActive = pathname.startsWith(item.href);
+                                        return (
+                                            <DropdownMenuItem key={item.href} asChild className="rounded-xl cursor-pointer">
+                                                <Link 
+                                                    href={item.disabled ? "#" : item.href}
+                                                    className={cn(
+                                                        "flex items-center gap-3 px-3 py-2 text-sm font-semibold transition-colors",
+                                                        isActive 
+                                                            ? "bg-primary/10 text-primary font-bold" 
+                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                                    )}
+                                                >
+                                                    <item.icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
+                                                    <span>{item.label}</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        );
+                                    })}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        );
+                    })()}
                 </div>
             </nav>
         </div>

@@ -65,6 +65,7 @@ import { Send, History, Check, CheckCircle2 } from "lucide-react";
 import { SmartStudentName } from "@/components/ui/SmartStudentName";
 import { useStudentDisplay } from "@/components/providers/StudentDisplayProvider";
 import { classroomNamesMatch } from "@/lib/classroom-utils";
+import { sortStudentList, StudentSortOption } from "@/lib/student-sort";
 
 export default function NewAssessmentPage() {
     const router = useRouter();
@@ -72,6 +73,7 @@ export default function NewAssessmentPage() {
     const { schoolData, user, isLoading, refreshData } = useSchoolData();
     const { globalDisplayMode, setGlobalDisplayMode } = useStudentDisplay();
     const [isSaving, setIsSaving] = useState(false);
+    const [sortOption, setSortOption] = useState<StudentSortOption>("alpha-asc");
 
     const initialCourseId = searchParams.get("courseId") || "";
     const editId = searchParams.get("editId") || "";
@@ -266,8 +268,8 @@ export default function NewAssessmentPage() {
                 }
             });
         }
-        return filtered;
-    }, [schoolData, targetClassroomName, selectedPeriodId, courseInfo]);
+        return sortStudentList(filtered, sortOption);
+    }, [schoolData, targetClassroomName, selectedPeriodId, courseInfo, sortOption]);
 
     // Periods logic with active period discovery
     const [periods, setPeriods] = useState<any[]>([]);
@@ -881,20 +883,36 @@ export default function NewAssessmentPage() {
                                 {targetClassroomName ? "Saisissez les notes pour chaque élève" : "Veuillez d'abord sélectionner un cours"}
                             </CardDescription>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3">
                             <Select 
                                 value={globalDisplayMode} 
                                 onValueChange={(v: any) => setGlobalDisplayMode(v)}
                             >
                                 <SelectTrigger className="h-6 text-xs border-none bg-transparent shadow-none px-1 py-0 focus:ring-0 text-muted-foreground font-medium hover:bg-secondary/50 rounded flex gap-1 items-center w-auto data-[state=open]:bg-secondary/50">
-                                    <SelectValue placeholder="Affichage Noms" />
+                                    <SelectValue placeholder="Affichage" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="compact">Noms Courts</SelectItem>
                                     <SelectItem value="full">Noms Complets</SelectItem>
-                                    <SelectItem value="id">Noms avec Matricule</SelectItem>
+                                    <SelectItem value="id">Avec Matricule</SelectItem>
                                 </SelectContent>
                             </Select>
+
+                            <Select 
+                                value={sortOption} 
+                                onValueChange={(v: any) => setSortOption(v)}
+                            >
+                                <SelectTrigger className="h-6 text-xs border-none bg-transparent shadow-none px-1 py-0 focus:ring-0 text-muted-foreground font-semibold hover:bg-secondary/50 rounded flex gap-1 items-center w-auto data-[state=open]:bg-secondary/50">
+                                    <SelectValue placeholder="Tri" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="alpha-asc">Nom (A → Z)</SelectItem>
+                                    <SelectItem value="alpha-desc">Nom (Z → A)</SelectItem>
+                                    <SelectItem value="matricule-asc">Matricule (Croissant)</SelectItem>
+                                    <SelectItem value="matricule-desc">Matricule (Décroissant)</SelectItem>
+                                </SelectContent>
+                            </Select>
+
                             <Badge variant="outline" className="text-xs">
                                 Total : {students.length} élèves
                             </Badge>

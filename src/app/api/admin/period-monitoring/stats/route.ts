@@ -297,7 +297,7 @@ export async function GET(req: NextRequest) {
                 mode: "cumulative",
                 title: "Stats Générales Cumulées",
                 periods: allPeriods.map((p) => ({ id: p.id, name: p.name })),
-                students: students.map((s) => ({ id: s.id, name: formatStudentName(s) })),
+                students: students.map((s) => ({ id: s.id, name: formatStudentName(s), matricule: s.matricule })),
                 periodData,
             });
         }
@@ -416,6 +416,7 @@ export async function GET(req: NextRequest) {
                 studentStats.push({
                     id: student.id,
                     name: formatStudentName(student),
+                    matricule: student.matricule,
                     score: Number(totalEarned.toFixed(1)),
                     max: totalPossible,
                     percentage: Number(percentage.toFixed(1)),

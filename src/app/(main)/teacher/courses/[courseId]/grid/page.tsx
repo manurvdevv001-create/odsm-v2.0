@@ -35,6 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SmartStudentName } from "@/components/ui/SmartStudentName";
 import { useStudentDisplay } from "@/components/providers/StudentDisplayProvider";
 import { classroomNamesMatch } from "@/lib/classroom-utils";
+import { sortStudentList, StudentSortOption } from "@/lib/student-sort";
 
 export default function GradeGridPage() {
     const params = useParams();
@@ -47,6 +48,7 @@ export default function GradeGridPage() {
     const periodId = searchParams.get("periodId");
     
     const { globalDisplayMode, setGlobalDisplayMode } = useStudentDisplay();
+    const [sortOption, setSortOption] = useState<StudentSortOption>("alpha-asc");
     
     const activePeriodName = useMemo(() => {
         const rawParam = searchParams.get("period");
@@ -116,10 +118,11 @@ export default function GradeGridPage() {
 
     const students = useMemo(() => {
         if (!classroomName) return [];
-        return ((schoolData?.students as any[]) || []).filter(
+        const list = ((schoolData?.students as any[]) || []).filter(
             (s: any) => s.classroomName === classroomName
-        ).sort((a, b) => a.lastName.localeCompare(b.lastName));
-    }, [schoolData, classroomName]);
+        );
+        return sortStudentList(list, sortOption);
+    }, [schoolData, classroomName, sortOption]);
 
     // Calculate totals matching totals/page.tsx but with simulation logic
     const studentTotals = useMemo(() => {
@@ -246,6 +249,23 @@ export default function GradeGridPage() {
                                     <SelectItem value="compact">Noms Courts</SelectItem>
                                     <SelectItem value="full">Noms Complets</SelectItem>
                                     <SelectItem value="id">Avec Matricule</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <span className="mx-2 text-muted-foreground/30">|</span>
+
+                            <Select 
+                                value={sortOption} 
+                                onValueChange={(v: any) => setSortOption(v)}
+                            >
+                                <SelectTrigger className="h-6 text-sm border-none bg-transparent shadow-none px-1 py-0 focus:ring-0 text-muted-foreground font-medium hover:bg-secondary/50 rounded flex gap-1 items-center w-auto data-[state=open]:bg-secondary/50">
+                                    <SelectValue placeholder="Tri Élèves" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="alpha-asc">Nom (A → Z)</SelectItem>
+                                    <SelectItem value="alpha-desc">Nom (Z → A)</SelectItem>
+                                    <SelectItem value="matricule-asc">Matricule (Croissant)</SelectItem>
+                                    <SelectItem value="matricule-desc">Matricule (Décroissant)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

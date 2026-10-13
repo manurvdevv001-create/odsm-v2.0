@@ -38,6 +38,8 @@ import {
     Send,
     FileSpreadsheet
 } from "lucide-react";
+import { SmartStudentName } from "@/components/ui/SmartStudentName";
+import { useStudentDisplay } from "@/components/providers/StudentDisplayProvider";
 import { Input } from "@/components/ui/input";
 import { getInitials, cn } from "@/lib/utils";
 import { classroomNamesMatch } from "@/lib/classroom-utils";
@@ -54,6 +56,7 @@ interface CourseGradeResult {
 
 export default function PanoramicViewPage() {
     const { schoolData, user, isLoading } = useSchoolData();
+    const { globalDisplayMode, setGlobalDisplayMode } = useStudentDisplay();
     const [searchTerm, setSearchTerm] = useState("");
     const [classroomData, setClassroomData] = useState<any>(null);
     const [isFetching, setIsFetching] = useState(false);
@@ -336,6 +339,12 @@ export default function PanoramicViewPage() {
                 if (sortConfig.key === 'name') {
                     valA = `${a.lastName} ${a.firstName}`.toLowerCase();
                     valB = `${b.lastName} ${b.firstName}`.toLowerCase();
+                } else if (sortConfig.key === 'matricule') {
+                    valA = a.matricule || '';
+                    valB = b.matricule || '';
+                    return sortConfig.direction === 'asc' 
+                        ? valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' })
+                        : valB.localeCompare(valA, undefined, { numeric: true, sensitivity: 'base' });
                 } else if (sortConfig.key === 'total' || sortConfig.key === 'moyenne') {
                     const getVal = (id: string) => {
                         const t = getStudentTotals(id);
@@ -516,6 +525,21 @@ export default function PanoramicViewPage() {
                             <Calculator className={cn("h-4 w-4", isSimulationMode && "animate-pulse")} />
                             {isSimulationMode ? "Simulation Active" : "Simulation"}
                         </Button>
+                        <div className="flex items-center gap-1.5">
+                            <Select 
+                                value={globalDisplayMode} 
+                                onValueChange={(v: any) => setGlobalDisplayMode(v)}
+                            >
+                                <SelectTrigger className="h-9 w-auto border border-border/40 bg-card rounded-xl px-3 text-xs font-semibold focus:ring-0">
+                                    <SelectValue placeholder="Affichage" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="compact">Noms Courts</SelectItem>
+                                    <SelectItem value="full">Noms Complets</SelectItem>
+                                    <SelectItem value="id">Avec Matricule</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="h-8 w-[1px] bg-border/20 mx-1 hidden sm:block" />
                         <div className="relative flex-1 sm:flex-none sm:w-[200px]">
                             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground/30" />
@@ -616,11 +640,23 @@ export default function PanoramicViewPage() {
                                                     <AvatarFallback className="text-[10px] bg-muted font-bold text-muted-foreground">{getInitials(student.lastName, student.firstName)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-col min-w-0">
-                                                    <span className="font-black text-[12px] uppercase truncate group-hover:text-primary transition-colors">
-                                                        {student.lastName} {student.firstName}
-                                                        {t.hasAnyAbsence && <Badge variant="destructive" className="h-3.5 px-1 py-0 text-[8px] font-black ml-1.5 inline-flex animate-pulse">(*)</Badge>}
+                                                    <div className="flex items-center gap-1 min-w-0">
+                                                        <SmartStudentName student={student} className="font-black text-[12px] uppercase truncate group-hover:text-primary transition-colors" />
+                                                        {t.hasAnyAbsence && <Badge variant="destructive" className="h-3.5 px-1 py-0 text-[8px] font-black ml-1 inline-flex animate-pulse shrink-0">(*)</Badge>}
+                                                    </div>
+                                                    <span 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleSort('matricule');
+                                                        }}
+                                                        className="text-[9px] text-muted-foreground/60 font-mono tracking-tighter truncate opacity-50 group-hover:opacity-100 transition-opacity cursor-pointer hover:underline"
+                                                        title="Trier par matricule"
+                                                    >
+                                                        {student.matricule}
+                                                        {sortConfig.key === 'matricule' && (
+                                                            sortConfig.direction === 'asc' ? ' ↑' : ' ↓'
+                                                        )}
                                                     </span>
-                                                    <span className="text-[9px] text-muted-foreground/60 font-mono tracking-tighter truncate opacity-50 group-hover:opacity-100 transition-opacity">{student.matricule}</span>
                                                 </div>
                                             </div>
                                         </TableCell>

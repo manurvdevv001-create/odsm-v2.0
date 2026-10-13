@@ -27,13 +27,13 @@ import {
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type SortMode = "alpha-asc" | "alpha-desc" | "score-asc" | "score-desc";
+type SortMode = "alpha-asc" | "alpha-desc" | "score-asc" | "score-desc" | "matricule-asc" | "matricule-desc";
 
 interface CumulativeData {
     mode: "cumulative";
     title: string;
     periods: { id: string; name: string }[];
-    students: { id: string; name: string }[];
+    students: { id: string; name: string; matricule?: string }[];
     periodData: Record<string, {
         periodName: string;
         studentScores: Record<string, { earned: number; max: number }>;
@@ -44,7 +44,7 @@ interface StandardData {
     title: string;
     periodName: string;
     stats: { total: number; passes: number; fails: number; passRate: number; failRate: number };
-    students: { id: string; name: string; score: number; max: number; percentage: number; passed: boolean }[];
+    students: { id: string; name: string; matricule?: string; score: number; max: number; percentage: number; passed: boolean }[];
 }
 
 // ─── Cumulative Page ───────────────────────────────────────────────────────────
@@ -83,6 +83,7 @@ function CumulativePage({ classroomName, data }: { classroomName: string; data: 
             return {
                 id: student.id,
                 name: student.name,
+                matricule: student.matricule || "",
                 score: Number(totalEarned.toFixed(1)),
                 max: totalMax,
                 percentage: Number(percentage.toFixed(1)),
@@ -93,10 +94,12 @@ function CumulativePage({ classroomName, data }: { classroomName: string; data: 
 
     const sortedStudents = useMemo(() => {
         return [...studentResults].sort((a, b) => {
-            if (sortMode === "alpha-asc") return a.name.localeCompare(b.name);
-            if (sortMode === "alpha-desc") return b.name.localeCompare(a.name);
+            if (sortMode === "alpha-asc") return a.name.localeCompare(b.name, 'fr');
+            if (sortMode === "alpha-desc") return b.name.localeCompare(a.name, 'fr');
             if (sortMode === "score-asc") return a.percentage - b.percentage;
             if (sortMode === "score-desc") return b.percentage - a.percentage;
+            if (sortMode === "matricule-asc") return (a.matricule || "").localeCompare(b.matricule || "", undefined, { numeric: true, sensitivity: "base" });
+            if (sortMode === "matricule-desc") return (b.matricule || "").localeCompare(a.matricule || "", undefined, { numeric: true, sensitivity: "base" });
             return 0;
         });
     }, [studentResults, sortMode]);
@@ -204,10 +207,16 @@ function CumulativePage({ classroomName, data }: { classroomName: string; data: 
                     {/* Sort Controls */}
                     <div className="flex flex-wrap justify-end gap-2 mb-4">
                         <Button variant={sortMode === "alpha-asc" ? "default" : "outline"} size="sm" onClick={() => setSortMode("alpha-asc")}>
-                            <ArrowDownAZ className="h-4 w-4 mr-1" /> A-Z
+                            <ArrowDownAZ className="h-4 w-4 mr-1" /> Nom A-Z
                         </Button>
                         <Button variant={sortMode === "alpha-desc" ? "default" : "outline"} size="sm" onClick={() => setSortMode("alpha-desc")}>
-                            <ArrowUpAZ className="h-4 w-4 mr-1" /> Z-A
+                            <ArrowUpAZ className="h-4 w-4 mr-1" /> Nom Z-A
+                        </Button>
+                        <Button variant={sortMode === "matricule-asc" ? "default" : "outline"} size="sm" onClick={() => setSortMode("matricule-asc")}>
+                            <ArrowDown01 className="h-4 w-4 mr-1" /> Matricule ↑
+                        </Button>
+                        <Button variant={sortMode === "matricule-desc" ? "default" : "outline"} size="sm" onClick={() => setSortMode("matricule-desc")}>
+                            <ArrowUp01 className="h-4 w-4 mr-1" /> Matricule ↓
                         </Button>
                         <Button variant={sortMode === "score-desc" ? "default" : "outline"} size="sm" onClick={() => setSortMode("score-desc")}>
                             <ArrowDown01 className="h-4 w-4 mr-1" /> Meilleur Score
@@ -272,10 +281,12 @@ function StandardPage({ data }: { data: StandardData }) {
 
     const sortedStudents = useMemo(() => {
         return [...(data.students || [])].sort((a, b) => {
-            if (sortMode === "alpha-asc") return a.name.localeCompare(b.name);
-            if (sortMode === "alpha-desc") return b.name.localeCompare(a.name);
+            if (sortMode === "alpha-asc") return a.name.localeCompare(b.name, 'fr');
+            if (sortMode === "alpha-desc") return b.name.localeCompare(a.name, 'fr');
             if (sortMode === "score-asc") return a.percentage - b.percentage;
             if (sortMode === "score-desc") return b.percentage - a.percentage;
+            if (sortMode === "matricule-asc") return (a.matricule || "").localeCompare(b.matricule || "", undefined, { numeric: true, sensitivity: "base" });
+            if (sortMode === "matricule-desc") return (b.matricule || "").localeCompare(a.matricule || "", undefined, { numeric: true, sensitivity: "base" });
             return 0;
         });
     }, [data, sortMode]);
@@ -305,10 +316,16 @@ function StandardPage({ data }: { data: StandardData }) {
             {/* Sort Controls */}
             <div className="flex flex-wrap justify-end gap-2 mb-4">
                 <Button variant={sortMode === "alpha-asc" ? "default" : "outline"} size="sm" onClick={() => setSortMode("alpha-asc")}>
-                    <ArrowDownAZ className="h-4 w-4 mr-1" /> A-Z
+                    <ArrowDownAZ className="h-4 w-4 mr-1" /> Nom A-Z
                 </Button>
                 <Button variant={sortMode === "alpha-desc" ? "default" : "outline"} size="sm" onClick={() => setSortMode("alpha-desc")}>
-                    <ArrowUpAZ className="h-4 w-4 mr-1" /> Z-A
+                    <ArrowUpAZ className="h-4 w-4 mr-1" /> Nom Z-A
+                </Button>
+                <Button variant={sortMode === "matricule-asc" ? "default" : "outline"} size="sm" onClick={() => setSortMode("matricule-asc")}>
+                    <ArrowDown01 className="h-4 w-4 mr-1" /> Matricule ↑
+                </Button>
+                <Button variant={sortMode === "matricule-desc" ? "default" : "outline"} size="sm" onClick={() => setSortMode("matricule-desc")}>
+                    <ArrowUp01 className="h-4 w-4 mr-1" /> Matricule ↓
                 </Button>
                 <Button variant={sortMode === "score-desc" ? "default" : "outline"} size="sm" onClick={() => setSortMode("score-desc")}>
                     <ArrowDown01 className="h-4 w-4 mr-1" /> Meilleur Score

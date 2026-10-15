@@ -1,12 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, UserCog, ShieldCheck, ShieldAlert, UserCheck, User, Users, Scale, LayoutDashboard, Loader2, Power, type LucideIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, UserCog, ShieldCheck, ShieldAlert, UserCheck, User, Users, Scale, LayoutDashboard, Loader2, Power, Search, Filter, X, Clock, Calendar, type LucideIcon } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { getUsers, deleteUser, updateUserManagementConfig } from './actions';
 import { forceTerminateSession } from './session-actions';
@@ -105,6 +113,8 @@ function formatElapsed(isoDate?: string): string {
     return `${days}j`;
 }
 
+type SearchField = 'all' | 'name' | 'login' | 'role' | 'function' | 'date';
+
 export default function UsersPage() {
     const router = useRouter();
     const { schoolData } = useSchoolData();
@@ -115,6 +125,11 @@ export default function UsersPage() {
     const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [pendingConfigChecked, setPendingConfigChecked] = useState(false);
+
+    // Search and filter state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchField, setSearchField] = useState<SearchField>('all');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
     const useStaffNumberAsLogin = (schoolData?.configuration as { userManagement?: { useStaffNumberAsLogin?: boolean } } | undefined)?.userManagement?.useStaffNumberAsLogin ?? false;
     const staffProfiles = schoolData?.teachers || [];
@@ -134,6 +149,50 @@ export default function UsersPage() {
             loadUsers();
         }
     }, [schoolData?.matricule]);
+
+    const filteredUsers = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+
+        return users.filter((user) => {
+            // Filter by session active status if specified
+            if (statusFilter === 'active' && !user.isSessionActive) return false;
+            if (statusFilter === 'inactive' && user.isSessionActive) return false;
+
+            if (!query) return true;
+
+            const linkedStaff = staffProfiles.find((s: { id?: string }) => s.id === user.staffId);
+            const roleCfg = roleLabels[user.role];
+            const roleName = (roleCfg?.label || user.role).toLowerCase();
+            const staffFunction = (linkedStaff?.function || '').toLowerCase();
+            const userName = (user.name || '').toLowerCase();
+            const userLogin = (user.login || '').toLowerCase();
+            const createdDate = formatSessionDate(user.createdAt).toLowerCase();
+            const lastAccessDate = formatSessionDate(user.lastLoginAt).toLowerCase();
+
+            switch (searchField) {
+                case 'name':
+                    return userName.includes(query);
+                case 'login':
+                    return userLogin.includes(query);
+                case 'role':
+                    return roleName.includes(query) || user.role.toLowerCase().includes(query);
+                case 'function':
+                    return staffFunction.includes(query);
+                case 'date':
+                    return createdDate.includes(query) || lastAccessDate.includes(query);
+                case 'all':
+                default:
+                    return (
+                        userName.includes(query) ||
+                        userLogin.includes(query) ||
+                        roleName.includes(query) ||
+                        staffFunction.includes(query) ||
+                        createdDate.includes(query) ||
+                        lastAccessDate.includes(query)
+                    );
+            }
+        });
+    }, [users, searchQuery, searchField, statusFilter, staffProfiles]);
 
     const handleDelete = async () => {
         if (!deletingUser || !schoolData?.matricule) return;
@@ -202,22 +261,25 @@ export default function UsersPage() {
         <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col gap-8 p-1"
+            className="flex flex-col gap-6 md:gap-8 p-1 w-full max-w-full overflow-hidden"
         >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="relative">
-                    <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground bg-clip-text">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-foreground bg-clip-text">
                         Gestion des Comptes d'Accès
                     </h1>
-                    <p className="text-muted-foreground font-medium mt-1 max-w-2xl">
+                    <p className="text-muted-foreground text-xs sm:text-sm md:text-base font-medium mt-1 max-w-2xl">
                         Gérez les accès applicatifs liés aux profils de votre personnel avec une sécurité granulaire.
                     </p>
-                    <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-12 bg-primary rounded-full blur-[2px] opacity-50" />
+                    <div className="hidden sm:block absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-12 bg-primary rounded-full blur-[2px] opacity-50" />
                 </div>
-                <div className="flex flex-wrap items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     {!readOnly && (
                         <>
-                            <div className="flex items-center space-x-3 glass-card bg-muted/20 px-4 py-2.5 border-primary/10 shadow-inner">
+                            <div className="flex items-center justify-between sm:justify-start space-x-3 glass-card bg-muted/20 px-3.5 py-2 border-primary/10 rounded-xl shadow-inner">
+                                <Label htmlFor="use-staff-number" className="text-xs sm:text-sm font-bold cursor-pointer text-foreground/80">
+                                    Utiliser le N° Staff comme login
+                                </Label>
                                 <Switch
                                     id="use-staff-number"
                                     checked={useStaffNumberAsLogin}
@@ -225,15 +287,12 @@ export default function UsersPage() {
                                     disabled={isUpdatingConfig}
                                     className="data-[state=checked]:bg-primary"
                                 />
-                                <Label htmlFor="use-staff-number" className="text-sm font-bold cursor-pointer text-foreground/80">
-                                    Utiliser le N° Staff comme login
-                                </Label>
                             </div>
                             <Button 
                                 onClick={() => router.push('/settings/users/new')} 
-                                className="gradient-btn h-11 px-6 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                className="gradient-btn h-10 sm:h-11 px-4 sm:px-6 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs sm:text-sm"
                             >
-                                <Plus className="mr-2 h-5 w-5" /> Créer un accès
+                                <Plus className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Créer un accès
                             </Button>
                         </>
                     )}
@@ -241,186 +300,405 @@ export default function UsersPage() {
             </div>
 
             <Card className="glass-card border-none shadow-2xl overflow-hidden bg-card/40 backdrop-blur-2xl transition-all duration-500 hover:shadow-primary/5">
-                <CardHeader className="border-b border-primary/5 bg-primary/5 backdrop-blur-md py-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-primary/10 rounded-2xl shadow-inner border border-primary/20 group-hover:scale-110 transition-transform">
-                                <Users className="h-6 w-6 text-primary" />
+                <CardHeader className="border-b border-primary/5 bg-primary/5 backdrop-blur-md py-4 sm:py-6 px-4 sm:px-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="p-2.5 sm:p-3 bg-primary/10 rounded-2xl shadow-inner border border-primary/20 group-hover:scale-110 transition-transform shrink-0">
+                                <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                             </div>
                             <div>
-                                <CardTitle className="text-2xl font-black tracking-tight text-foreground">Comptes Utilisateurs</CardTitle>
-                                <CardDescription className="text-muted-foreground font-bold flex items-center gap-2">
+                                <CardTitle className="text-xl sm:text-2xl font-black tracking-tight text-foreground">Comptes Utilisateurs</CardTitle>
+                                <CardDescription className="text-muted-foreground font-bold flex items-center gap-2 text-xs sm:text-sm mt-0.5">
                                     <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                                     {users.length} accès configuré{users.length > 1 ? 's' : ''}
+                                    {searchQuery && (
+                                        <span className="text-primary font-semibold">
+                                            ({filteredUsers.length} trouvé{filteredUsers.length > 1 ? 's' : ''})
+                                        </span>
+                                    )}
                                 </CardDescription>
+                            </div>
+                        </div>
+
+                        {/* Search and Filter Controls */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
+                            <div className="relative flex-1 sm:w-64 md:w-72">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                <Input
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder={
+                                        searchField === 'all'
+                                            ? 'Rechercher...'
+                                            : searchField === 'name'
+                                            ? 'Nom ou profil...'
+                                            : searchField === 'login'
+                                            ? 'Login / N° Staff...'
+                                            : searchField === 'role'
+                                            ? 'Rôle...'
+                                            : searchField === 'function'
+                                            ? 'Fonction...'
+                                            : 'Date (JJ-MM-AA)...'
+                                    }
+                                    className="pl-9 pr-8 h-9 text-xs sm:text-sm bg-background/80 border-primary/20 rounded-xl"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1 sm:flex-none">
+                                    <Select value={searchField} onValueChange={(val) => setSearchField(val as SearchField)}>
+                                        <SelectTrigger className="h-9 w-full sm:w-[145px] text-xs font-semibold bg-background/80 border-primary/20 rounded-xl">
+                                            <Filter className="h-3.5 w-3.5 mr-1 text-primary shrink-0" />
+                                            <SelectValue placeholder="Champ" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Tous les champs</SelectItem>
+                                            <SelectItem value="name">Identité (Nom)</SelectItem>
+                                            <SelectItem value="login">Login</SelectItem>
+                                            <SelectItem value="role">Rôle</SelectItem>
+                                            <SelectItem value="function">Fonction</SelectItem>
+                                            <SelectItem value="date">Date</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="flex-1 sm:flex-none">
+                                    <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val as 'all' | 'active' | 'inactive')}>
+                                        <SelectTrigger className="h-9 w-full sm:w-[125px] text-xs font-semibold bg-background/80 border-primary/20 rounded-xl">
+                                            <SelectValue placeholder="Statut" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Tous statuts</SelectItem>
+                                            <SelectItem value="active">En cours</SelectItem>
+                                            <SelectItem value="inactive">Hors ligne</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                    <ScrollArea className="h-[calc(100vh-320px)]">
-                        <TooltipProvider>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-muted/30 border-b border-primary/5 hover:bg-muted/40 transition-colors">
-                                        <TableHead className="w-[20%] font-bold text-foreground py-4">Identité (Profil)</TableHead>
-                                        <TableHead className="font-bold text-foreground">Login</TableHead>
-                                        <TableHead className="font-bold text-foreground">Rôle</TableHead>
-                                        <TableHead className="text-center font-bold text-foreground">Créé le</TableHead>
-                                        <TableHead className="text-center font-bold text-foreground">Dernier accès</TableHead>
-                                        <TableHead className="text-center font-bold text-foreground">Heure</TableHead>
-                                        <TableHead className="text-center font-bold text-foreground">Durée</TableHead>
-                                        <TableHead className="text-center font-bold text-foreground">Depuis</TableHead>
-                                        <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {isLoading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={9} className="text-center py-20">
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                                                    <span className="text-slate-500 font-medium">Chargement des comptes...</span>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : users.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={9} className="text-center py-20">
-                                                <div className="flex flex-col items-center gap-3 text-slate-400">
-                                                    <UserCog className="h-12 w-12 opacity-20" />
-                                                    <p className="font-medium">Aucun compte utilisateur configuré.</p>
-                                                    <Button variant="outline" size="sm" onClick={() => router.push('/settings/users/new')}>
-                                                        Créer le premier accès
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        <AnimatePresence mode="popLayout">
-                                            {users.map((user, idx) => {
-                                                const roleCfg = roleLabels[user.role] || { label: user.role, color: 'bg-slate-100 text-slate-600', icon: User };
-                                                const RoleIcon = roleCfg.icon;
-                                                const linkedStaff = staffProfiles.find((s: { id?: string }) => s.id === user.staffId);
+                    {/* MOBILE CARD VIEW (< md screen) */}
+                    <div className="block md:hidden divide-y divide-primary/5 p-3 sm:p-4 space-y-3">
+                        {isLoading ? (
+                            <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <span className="text-muted-foreground text-sm font-medium">Chargement des comptes...</span>
+                            </div>
+                        ) : filteredUsers.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 gap-3 text-center text-muted-foreground">
+                                <UserCog className="h-10 w-10 opacity-30" />
+                                <p className="font-medium text-sm">
+                                    {searchQuery ? 'Aucun résultat trouvé pour votre recherche.' : 'Aucun compte utilisateur configuré.'}
+                                </p>
+                                {searchQuery ? (
+                                    <Button variant="outline" size="sm" onClick={() => setSearchQuery('')} className="rounded-xl text-xs">
+                                        Effacer le filtre
+                                    </Button>
+                                ) : (
+                                    <Button variant="outline" size="sm" onClick={() => router.push('/settings/users/new')} className="rounded-xl text-xs">
+                                        Créer le premier accès
+                                    </Button>
+                                )}
+                            </div>
+                        ) : (
+                            filteredUsers.map((user) => {
+                                const roleCfg = roleLabels[user.role] || { label: user.role, color: 'bg-slate-100 text-slate-600', icon: User };
+                                const RoleIcon = roleCfg.icon;
+                                const linkedStaff = staffProfiles.find((s: { id?: string }) => s.id === user.staffId);
 
-                                                return (
-                                                    <motion.tr 
-                                                        key={user.id}
-                                                        initial={{ opacity: 0, x: -10 }}
-                                                        animate={{ opacity: 1, x: 0 }}
-                                                        transition={{ delay: idx * 0.05 }}
-                                                        className="group hover:bg-primary/5 border-b border-primary/5 transition-all duration-300"
+                                return (
+                                    <div
+                                        key={user.id}
+                                        className="bg-card/70 border border-primary/10 rounded-2xl p-4 shadow-sm space-y-3 transition-all active:scale-[0.99]"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary border border-primary/10 shadow-sm shrink-0">
+                                                    {user.name.charAt(0)}
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span 
+                                                        className="font-bold text-foreground text-sm truncate hover:text-primary cursor-pointer"
+                                                        onClick={() => router.push(`/settings/users/${user.id}`)}
                                                     >
-                                                        <TableCell className="py-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary border border-primary/10 shadow-sm group-hover:scale-110 transition-transform">
-                                                                    {user.name.charAt(0)}
-                                                                </div>
-                                                                <div className="flex flex-col">
-                                                                    <span
-                                                                        className="font-bold text-foreground group-hover:text-primary cursor-pointer transition-colors text-sm lg:text-base"
-                                                                        onClick={() => router.push(`/settings/users/${user.id}`)}
-                                                                    >
-                                                                        {user.name}
-                                                                    </span>
-                                                                    {linkedStaff && (
-                                                                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-70 group-hover:opacity-100 transition-opacity">
-                                                                            {linkedStaff.function}
+                                                        {user.name}
+                                                    </span>
+                                                    {linkedStaff && (
+                                                        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider truncate">
+                                                            {linkedStaff.function}
+                                                        </span>
+                                                    )}
+                                                    <span className="text-xs font-mono text-muted-foreground mt-0.5">
+                                                        Login : <span className="font-semibold text-foreground/90">{user.login}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <Badge variant="outline" className={cn("px-2 py-0.5 border-none font-semibold text-[11px] shrink-0 flex items-center", roleCfg.color)}>
+                                                <RoleIcon className="mr-1 h-3 w-3" />
+                                                {roleCfg.label}
+                                            </Badge>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-primary/5 text-xs text-muted-foreground">
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-[10px] uppercase font-bold text-muted-foreground/70 flex items-center gap-1">
+                                                    <Calendar className="h-3 w-3" /> Créé le
+                                                </span>
+                                                <span className="font-mono text-foreground/80">{formatSessionDate(user.createdAt)}</span>
+                                            </div>
+
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-[10px] uppercase font-bold text-muted-foreground/70 flex items-center gap-1">
+                                                    <Clock className="h-3 w-3" /> Statut session
+                                                </span>
+                                                <div>
+                                                    {user.isSessionActive ? (
+                                                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px] font-bold px-1.5 py-0">
+                                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse mr-1 inline-block" />
+                                                            En cours
+                                                        </Badge>
+                                                    ) : (
+                                                        <span className="font-mono text-foreground/70">{formatElapsed(user.lastLogoutAt)}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-0.5 col-span-2">
+                                                <span className="text-[10px] uppercase font-bold text-muted-foreground/70">
+                                                    Dernier accès
+                                                </span>
+                                                <div className="flex items-center gap-2 font-mono text-[11px] text-foreground/80">
+                                                    <span>{formatSessionDate(user.lastLoginAt)}</span>
+                                                    <span>{formatSessionTime(user.lastLoginAt)}</span>
+                                                    {user.lastSessionDuration !== undefined && !user.isSessionActive && (
+                                                        <span className="text-muted-foreground">({formatDuration(user.lastSessionDuration)})</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {!readOnly && (
+                                            <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-primary/5">
+                                                {user.isSessionActive && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 px-2.5 text-xs text-amber-600 hover:bg-amber-50 rounded-lg flex items-center gap-1"
+                                                        onClick={() => setTerminatingUser(user)}
+                                                    >
+                                                        <Power className="h-3.5 w-3.5" /> Clôturer
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 px-2.5 text-xs text-blue-600 hover:bg-blue-50 rounded-lg flex items-center gap-1"
+                                                    onClick={() => router.push(`/settings/users/${user.id}`)}
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5" /> Modifier
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 px-2.5 text-xs text-rose-500 hover:bg-rose-50 rounded-lg flex items-center gap-1"
+                                                    onClick={() => setDeletingUser(user)}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" /> Supprimer
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+
+                    {/* DESKTOP TABLE VIEW (>= md screen) */}
+                    <div className="hidden md:block">
+                        <ScrollArea className="h-[calc(100vh-320px)]">
+                            <TooltipProvider>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-muted/30 border-b border-primary/5 hover:bg-muted/40 transition-colors">
+                                            <TableHead className="w-[20%] font-bold text-foreground py-4">Identité (Profil)</TableHead>
+                                            <TableHead className="font-bold text-foreground">Login</TableHead>
+                                            <TableHead className="font-bold text-foreground">Rôle</TableHead>
+                                            <TableHead className="text-center font-bold text-foreground">Créé le</TableHead>
+                                            <TableHead className="text-center font-bold text-foreground">Dernier accès</TableHead>
+                                            <TableHead className="text-center font-bold text-foreground">Heure</TableHead>
+                                            <TableHead className="text-center font-bold text-foreground">Durée</TableHead>
+                                            <TableHead className="text-center font-bold text-foreground">Depuis</TableHead>
+                                            <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {isLoading ? (
+                                            <TableRow>
+                                                <TableCell colSpan={9} className="text-center py-20">
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                                        <span className="text-slate-500 font-medium">Chargement des comptes...</span>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : filteredUsers.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={9} className="text-center py-20">
+                                                    <div className="flex flex-col items-center gap-3 text-slate-400">
+                                                        <UserCog className="h-12 w-12 opacity-20" />
+                                                        <p className="font-medium">
+                                                            {searchQuery ? 'Aucun utilisateur ne correspond à votre filtre.' : 'Aucun compte utilisateur configuré.'}
+                                                        </p>
+                                                        {searchQuery ? (
+                                                            <Button variant="outline" size="sm" onClick={() => setSearchQuery('')}>
+                                                                Effacer le filtre
+                                                            </Button>
+                                                        ) : (
+                                                            <Button variant="outline" size="sm" onClick={() => router.push('/settings/users/new')}>
+                                                                Créer le premier accès
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            <AnimatePresence mode="popLayout">
+                                                {filteredUsers.map((user, idx) => {
+                                                    const roleCfg = roleLabels[user.role] || { label: user.role, color: 'bg-slate-100 text-slate-600', icon: User };
+                                                    const RoleIcon = roleCfg.icon;
+                                                    const linkedStaff = staffProfiles.find((s: { id?: string }) => s.id === user.staffId);
+
+                                                    return (
+                                                        <motion.tr 
+                                                            key={user.id}
+                                                            initial={{ opacity: 0, x: -10 }}
+                                                            animate={{ opacity: 1, x: 0 }}
+                                                            transition={{ delay: idx * 0.05 }}
+                                                            className="group hover:bg-primary/5 border-b border-primary/5 transition-all duration-300"
+                                                        >
+                                                            <TableCell className="py-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary border border-primary/10 shadow-sm group-hover:scale-110 transition-transform">
+                                                                        {user.name.charAt(0)}
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span
+                                                                            className="font-bold text-foreground group-hover:text-primary cursor-pointer transition-colors text-sm lg:text-base"
+                                                                            onClick={() => router.push(`/settings/users/${user.id}`)}
+                                                                        >
+                                                                            {user.name}
                                                                         </span>
-                                                                    )}
+                                                                        {linkedStaff && (
+                                                                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-70 group-hover:opacity-100 transition-opacity">
+                                                                                {linkedStaff.function}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="font-mono text-[11px] font-semibold text-muted-foreground bg-muted/20 rounded-md py-1 px-2 group-hover:bg-primary/10 group-hover:text-primary transition-colors">{user.login}</TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="outline" className={cn("px-2 py-0.5 border-none font-semibold flex items-center w-fit", roleCfg.color)}>
-                                                                <RoleIcon className="mr-1.5 h-3.5 w-3.5" />
-                                                                {roleCfg.label}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="text-center text-xs text-slate-500 font-mono">
-                                                            {formatSessionDate(user.createdAt)}
-                                                        </TableCell>
-                                                        {/* Session columns */}
-                                                        <TableCell className="text-center text-xs text-slate-500 font-mono">
-                                                            {formatSessionDate(user.lastLoginAt)}
-                                                        </TableCell>
-                                                        <TableCell className="text-center text-xs text-slate-500 font-mono">
-                                                            {formatSessionTime(user.lastLoginAt)}
-                                                        </TableCell>
-                                                        <TableCell className="text-center text-xs">
-                                                            {user.isSessionActive ? (
-                                                                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px] font-bold px-2 py-0.5">
-                                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5 inline-block" />
-                                                                    En cours
+                                                            </TableCell>
+                                                            <TableCell className="font-mono text-[11px] font-semibold text-muted-foreground bg-muted/20 rounded-md py-1 px-2 group-hover:bg-primary/10 group-hover:text-primary transition-colors">{user.login}</TableCell>
+                                                            <TableCell>
+                                                                <Badge variant="outline" className={cn("px-2 py-0.5 border-none font-semibold flex items-center w-fit", roleCfg.color)}>
+                                                                    <RoleIcon className="mr-1.5 h-3.5 w-3.5" />
+                                                                    {roleCfg.label}
                                                                 </Badge>
-                                                            ) : (
-                                                                <span className="text-slate-500 font-mono">{formatDuration(user.lastSessionDuration)}</span>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="text-center text-xs text-slate-400 font-mono">
-                                                            {user.isSessionActive ? (
-                                                                <span className="text-emerald-500">—</span>
-                                                            ) : (
-                                                                formatElapsed(user.lastLogoutAt)
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {!readOnly && (
-                                                                <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    {user.isSessionActive && (
+                                                            </TableCell>
+                                                            <TableCell className="text-center text-xs text-slate-500 font-mono">
+                                                                {formatSessionDate(user.createdAt)}
+                                                            </TableCell>
+                                                            {/* Session columns */}
+                                                            <TableCell className="text-center text-xs text-slate-500 font-mono">
+                                                                {formatSessionDate(user.lastLoginAt)}
+                                                            </TableCell>
+                                                            <TableCell className="text-center text-xs text-slate-500 font-mono">
+                                                                {formatSessionTime(user.lastLoginAt)}
+                                                            </TableCell>
+                                                            <TableCell className="text-center text-xs">
+                                                                {user.isSessionActive ? (
+                                                                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px] font-bold px-2 py-0.5">
+                                                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5 inline-block" />
+                                                                        En cours
+                                                                    </Badge>
+                                                                ) : (
+                                                                    <span className="text-slate-500 font-mono">{formatDuration(user.lastSessionDuration)}</span>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="text-center text-xs text-slate-400 font-mono">
+                                                                {user.isSessionActive ? (
+                                                                    <span className="text-emerald-500">—</span>
+                                                                ) : (
+                                                                    formatElapsed(user.lastLogoutAt)
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="text-right">
+                                                                {!readOnly && (
+                                                                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        {user.isSessionActive && (
+                                                                            <Tooltip>
+                                                                                <TooltipTrigger asChild>
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="icon"
+                                                                                        className="h-8 w-8 text-amber-600 hover:bg-amber-50"
+                                                                                        onClick={() => setTerminatingUser(user)}
+                                                                                    >
+                                                                                        <Power className="h-4 w-4" />
+                                                                                    </Button>
+                                                                                </TooltipTrigger>
+                                                                                <TooltipContent>Clôturer la session</TooltipContent>
+                                                                            </Tooltip>
+                                                                        )}
                                                                         <Tooltip>
                                                                             <TooltipTrigger asChild>
                                                                                 <Button
                                                                                     variant="ghost"
                                                                                     size="icon"
-                                                                                    className="h-8 w-8 text-amber-600 hover:bg-amber-50"
-                                                                                    onClick={() => setTerminatingUser(user)}
+                                                                                    className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                                                                                    onClick={() => router.push(`/settings/users/${user.id}`)}
                                                                                 >
-                                                                                    <Power className="h-4 w-4" />
+                                                                                    <Pencil className="h-4 w-4" />
                                                                                 </Button>
                                                                             </TooltipTrigger>
-                                                                            <TooltipContent>Clôturer la session</TooltipContent>
+                                                                            <TooltipContent>Modifier le profil</TooltipContent>
                                                                         </Tooltip>
-                                                                    )}
-                                                                    <Tooltip>
-                                                                        <TooltipTrigger asChild>
-                                                                            <Button
-                                                                                variant="ghost"
-                                                                                size="icon"
-                                                                                className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                                                                                onClick={() => router.push(`/settings/users/${user.id}`)}
-                                                                            >
-                                                                                <Pencil className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>Modifier le profil</TooltipContent>
-                                                                    </Tooltip>
-                                                                    <Tooltip>
-                                                                        <TooltipTrigger asChild>
-                                                                            <Button
-                                                                                variant="ghost"
-                                                                                size="icon"
-                                                                                className="h-8 w-8 text-rose-500 hover:bg-rose-50"
-                                                                                onClick={() => setDeletingUser(user)}
-                                                                            >
-                                                                                <Trash2 className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>Supprimer le compte</TooltipContent>
-                                                                    </Tooltip>
-                                                                </div>
-                                                            )}
-                                                        </TableCell>
-                                                    </motion.tr>
-                                                );
-                                            })}
-                                        </AnimatePresence>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TooltipProvider>
-                    </ScrollArea>
+                                                                        <Tooltip>
+                                                                            <TooltipTrigger asChild>
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    className="h-8 w-8 text-rose-500 hover:bg-rose-50"
+                                                                                    onClick={() => setDeletingUser(user)}
+                                                                                >
+                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </TooltipTrigger>
+                                                                            <TooltipContent>Supprimer le compte</TooltipContent>
+                                                                        </Tooltip>
+                                                                    </div>
+                                                                )}
+                                                            </TableCell>
+                                                        </motion.tr>
+                                                    );
+                                                })}
+                                            </AnimatePresence>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </TooltipProvider>
+                        </ScrollArea>
+                    </div>
                 </CardContent>
             </Card>
 

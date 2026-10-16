@@ -1,9 +1,23 @@
 export type PeriodState = "past" | "active" | "future" | "unknown";
 
 export function getPeriodState(calendar: Record<string, any>, classroom: Record<string, any>, periodId: string, periodName?: string): PeriodState {
-    const level = String(classroom.level || "").toLowerCase();
+    const level = String(classroom?.level || "").toLowerCase();
     const periods = level ? calendar?.[level]?.periods || [] : [];
-    const period = periods.find((candidate: any) => candidate.id === periodId || candidate.name === periodId || candidate.name === periodName);
+    let period = periods.find((candidate: any) => candidate.id === periodId || candidate.name === periodId || candidate.name === periodName);
+
+    // Fallback: if not found under classroom.level, search across all academic levels in calendar
+    if (!period && calendar) {
+        for (const l of ['primaire', 'secondaire', 'maternelle']) {
+            if (l === level) continue;
+            const fallbackPeriods = calendar?.[l]?.periods || [];
+            const found = fallbackPeriods.find((candidate: any) => candidate.id === periodId || candidate.name === periodId || candidate.name === periodName);
+            if (found) {
+                period = found;
+                break;
+            }
+        }
+    }
+
     if (!period) return "unknown";
     if (period.isActive) return "active";
 

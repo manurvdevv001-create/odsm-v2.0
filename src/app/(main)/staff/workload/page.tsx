@@ -17,41 +17,86 @@ export default function WorkloadPage() {
         if (!typedSchoolData) return [];
 
         const teachers = typedSchoolData.teachers || [];
-        const timetables = typedSchoolData.timetables || {};
+        const rawTimetables = typedSchoolData.timetables || {};
+        const timetables = typeof rawTimetables === 'string'
+            ? (() => { try { return JSON.parse(rawTimetables); } catch { return {}; } })()
+            : rawTimetables;
 
         const teacherWorkloads = teachers.map((teacher: any) => {
             let totalHours = 0;
-            const assignedClasses: string[] = [];
-            const courses: string[] = [];
+            const assignedClasses = new Set<string>();
+            const courses = new Set<string>();
+            const teacherFullName = getTeacherFullName(teacher);
 
-            // Scan all timetables (Secondary usually has these)
-            // Logic: If a slot in a timetable belongs to this teacher, add it.
-            // Note: In ODSM-App, timetables were often indexed by level/classroom
-            Object.entries(timetables).forEach(([level, classrooms]: [string, any]) => {
-                if (level === 'secondaire') {
-                    Object.entries(classrooms).forEach(([classroomName, days]: [string, any]) => {
-                        Object.values(days).forEach((slots: any) => {
-                            if (Array.isArray(slots)) {
-                                slots.forEach((slot: any) => {
-                                    if (slot.teacherId === teacher.id || (slot.teacherName && matchTeacherName(getTeacherFullName(teacher), slot.teacherName))) {
-                                        totalHours += 1; // Each slot is typically 1 hour/period
-                                        if (!assignedClasses.includes(classroomName)) assignedClasses.push(classroomName);
-                                        if (slot.subject && !courses.includes(slot.subject)) courses.push(slot.subject);
-                                    }
-                                });
+            // Scan all timetables. Timetables are structured as:
+            // timetables[classroomName][day_slotKey] = { course: string, teacher?: string, teacherId?: string, ... }
+            // Or historically/nested: timetables[level][classroomName][day] = [slots]
+            Object.entries(timetables).forEach(([classroomOrLevelKey, classroomData]: [string, any]) => {
+                if (!classroomData || typeof classroomData !== 'object') return;
+
+                // Case 1: Standard flat structure timetables[classroomKey][slotKey]
+                // Check if values inside are slot objects with course/teacher
+                const entries = Object.entries(classroomData);
+                const isFlatClassroom = entries.some(([_, val]: [string, any]) => val && typeof val === 'object' && ('course' in val || 'teacher' in val || 'teacherId' in val));
+
+                if (isFlatClassroom) {
+                    const classroomName = classroomOrLevelKey;
+                    entries.forEach(([_, slot]: [string, any]) => {
+                        if (!slot || typeof slot !== 'object') return;
+                        const sTeacherName = slot.teacher || slot.teacherName;
+                        const sTeacherId = slot.teacherId;
+                        const isMatch = (sTeacherId && sTeacherId === teacher.id) ||
+                            (sTeacherName && (matchTeacherName(teacherFullName, sTeacherName) || matchTeacherName(teacher.lastName, sTeacherName)));
+
+                        if (isMatch) {
+                            totalHours += 1;
+                            assignedClasses.add(classroomName);
+                            const subject = slot.course || slot.subject;
+                            if (subject) courses.add(subject);
+                        }
+                    });
+                } else {
+                    // Case 2: Nested structure timetables[level][classroomName][day/slots]
+                    Object.entries(classroomData).forEach(([classroomName, daysOrSlots]: [string, any]) => {
+                        if (!daysOrSlots || typeof daysOrSlots !== 'object') return;
+
+                        const scanSlot = (slot: any) => {
+                            if (!slot || typeof slot !== 'object') return;
+                            const sTeacherName = slot.teacher || slot.teacherName;
+                            const sTeacherId = slot.teacherId;
+                            const isMatch = (sTeacherId && sTeacherId === teacher.id) ||
+                                (sTeacherName && (matchTeacherName(teacherFullName, sTeacherName) || matchTeacherName(teacher.lastName, sTeacherName)));
+
+                            if (isMatch) {
+                                totalHours += 1;
+                                assignedClasses.add(classroomName);
+                                const subject = slot.course || slot.subject;
+                                if (subject) courses.add(subject);
                             }
-                        });
+                        };
+
+                        if (Array.isArray(daysOrSlots)) {
+                            daysOrSlots.forEach(scanSlot);
+                        } else {
+                            Object.values(daysOrSlots).forEach((val: any) => {
+                                if (Array.isArray(val)) {
+                                    val.forEach(scanSlot);
+                                } else if (val && typeof val === 'object') {
+                                    scanSlot(val);
+                                }
+                            });
+                        }
                     });
                 }
             });
 
             return {
                 id: teacher.id,
-                name: getTeacherFullName(teacher),
+                name: teacherFullName,
                 category: teacher.category,
                 totalHours,
-                classesCount: assignedClasses.length,
-                courses: courses.join(', ')
+                classesCount: assignedClasses.size,
+                courses: Array.from(courses).join(', ')
             };
         });
 
@@ -70,7 +115,7 @@ export default function WorkloadPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Professeurs</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Enseignant</CardTitle>
                         <UserCheck className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>

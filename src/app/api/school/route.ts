@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getTeacherFullName, matchTeacherName } from "@/lib/utils";
 import { getCurrentSchoolYear } from "@/lib/school-year-utils";
 import { getSchoolSettingsForYear } from "@/lib/school-settings";
-import { parseAssignedClassrooms } from "@/lib/classroom-utils";
+import { parseAssignedClassrooms, inferClassroomLevel } from "@/lib/classroom-utils";
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -66,6 +66,17 @@ export async function GET(req: NextRequest) {
         const classroomsList = await db.classroom.findMany({
             where: { schoolMatricule: matricule }
         });
+
+        // Auto-heal any classroom whose DB level contradicts its name
+        const classroomsToFix = classroomsList.filter((c: any) => inferClassroomLevel(c.name) !== c.level);
+        if (classroomsToFix.length > 0) {
+            await Promise.all(classroomsToFix.map((c: any) => {
+                const correctLevel = inferClassroomLevel(c.name);
+                (c as any).level = correctLevel;
+                return db.classroom.update({ where: { id: c.id }, data: { level: correctLevel } }).catch(() => {});
+            }));
+        }
+
 
         let schoolSettings = await getSchoolSettingsForYear(matricule, year || undefined);
         if (!schoolSettings) {

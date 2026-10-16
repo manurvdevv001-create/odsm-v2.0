@@ -7,6 +7,73 @@
 export const STRUCTURE_META_KEYS = ['classrooms', 'options', 'postCTEB', 'config'];
 
 /**
+ * Canonical, server-safe classroom level deduction.
+ *
+ * Works WITHOUT the full `schoolData` object (suitable for API routes).
+ * Priority order:
+ *   1. Explicit lookup in the school `structure` JSON (most precise).
+ *   2. Keyword detection on the classroom name (robust fallback).
+ *   3. Numeric prefix heuristic: "1e …", "2e …" etc. → primaire.
+ *
+ * @param classroomName  The raw classroom name (e.g. "1e Primaire", "7e CTEB", "1ère Maternelle").
+ * @param schoolStructure  Optional parsed `school.structure` object. When provided, the lookup
+ *                         is authoritative and the heuristics are never reached for known classes.
+ * @returns 'PRIMAIRE' | 'SECONDAIRE' | 'MATERNELLE'  (always a non-null string).
+ */
+export function inferClassroomLevel(
+    classroomName: string,
+    schoolStructure?: Record<string, any> | null
+): 'PRIMAIRE' | 'SECONDAIRE' | 'MATERNELLE' {
+    const normalize = (s: string) =>
+        s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const norm = normalize(classroomName);
+
+    // 1. Authoritative lookup: iterate level keys (primaire / secondaire / maternelle / …)
+    if (schoolStructure && typeof schoolStructure === 'object') {
+        for (const levelKey of Object.keys(schoolStructure)) {
+            if (STRUCTURE_META_KEYS.includes(levelKey)) continue;
+            const levelData = schoolStructure[levelKey];
+            if (!levelData || typeof levelData !== 'object') continue;
+
+            for (const gradeName of Object.keys(levelData)) {
+                if (STRUCTURE_META_KEYS.includes(gradeName)) continue;
+                const normGrade = normalize(gradeName)
+                    .replace(/1ere/g, '1e')
+                    .replace(/\bpremiere\b/, '1e');
+                const normTarget = norm.replace(/1ere/g, '1e').replace(/\bpremiere\b/, '1e');
+                if (normTarget === normGrade || normTarget.startsWith(normGrade + ' ') || normTarget.startsWith(normGrade)) {
+                    const lvl = levelKey.toUpperCase();
+                    if (lvl === 'PRIMAIRE' || lvl === 'SECONDAIRE' || lvl === 'MATERNELLE') return lvl;
+                    // Handle custom level names (e.g. 'maternelle', 'primaire')
+                    if (lvl.includes('MATERN')) return 'MATERNELLE';
+                    if (lvl.includes('PRIM'))   return 'PRIMAIRE';
+                    if (lvl.includes('SEC'))     return 'SECONDAIRE';
+                }
+            }
+        }
+    }
+
+    // 2. Keyword detection on the classroom name
+    const secondaryKeywords = ['cteb', 'humanite', 'secondaire', '7e ', '8e ', '7eme', '8eme',
+        'education de base', 'litteraire', 'scientifique', 'commercial', 'pedagogique',
+        'technique', 'couture', 'mecanique', 'electrique', 'post-cteb', 'postcteb'];
+    if (secondaryKeywords.some(kw => norm.includes(normalize(kw)))) return 'SECONDAIRE';
+
+    const maternelleKeywords = ['maternelle', 'accueil', 'garderie'];
+    if (maternelleKeywords.some(kw => norm.includes(normalize(kw)))) return 'MATERNELLE';
+
+    const primaireKeywords = ['primaire'];
+    if (primaireKeywords.some(kw => norm.includes(normalize(kw)))) return 'PRIMAIRE';
+
+    // 3. Numeric prefix heuristic: "1e …", "2ème …" etc. without secondary keywords → primaire
+    if (/^\d+[a-z]*/.test(norm)) return 'PRIMAIRE';
+
+    // 4. Safe default
+    return 'PRIMAIRE';
+}
+
+
+/**
  * Résout le champ assignedClassroom d'un profil personnel en liste de références.
  * Le champ peut contenir : un nom simple, un UUID, ou une chaîne JSON
  * (tableau de noms ou d'UUID) selon la façon dont le profil a été enregistré.

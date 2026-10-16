@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { inferClassroomLevel, classroomNamesMatch } from "@/lib/classroom-utils";
+
 
 export default function GradeAggregatesPage() {
     const { courseId } = useParams();
@@ -102,39 +104,40 @@ export default function GradeAggregatesPage() {
         fetchAllGrades();
     }, [courseId, classroomName, schoolData?.matricule]);
 
-    // Calendar periods
+    // Calendar periods — determine level from classroomName or fallback to user profile
     const periods = useMemo(() => {
         if (!schoolData?.calendar) return [];
-        const rawLevel = user?.profile?.level?.toLowerCase() || "secondaire";
-        if ((schoolData.calendar as any)[rawLevel]?.periods) return (schoolData.calendar as any)[rawLevel].periods;
-        const level = rawLevel.includes("primaire") ? "primaire" : rawLevel.includes("maternelle") ? "maternelle" : "secondaire";
-        return (schoolData.calendar as any)?.[level]?.periods || (schoolData.calendar as any)?.secondaire?.periods || [];
-    }, [schoolData, user]);
+        const detectedLevel = classroomName 
+            ? inferClassroomLevel(classroomName).toLowerCase() 
+            : (user?.profile?.level?.toLowerCase() || "secondaire");
+        const level = detectedLevel.includes("primaire") ? "primaire" : detectedLevel.includes("maternelle") ? "maternelle" : "secondaire";
+        return (schoolData.calendar as any)?.[level]?.periods || (schoolData.calendar as any)?.[detectedLevel]?.periods || (schoolData.calendar as any)?.secondaire?.periods || [];
+    }, [schoolData, classroomName, user]);
 
-    // Derive semesters from calendar period IDs (e.g. s_s1_p1 → "s1", s_s2_p3 → "s2")
-    // Fallback: use term field if present, else parse from ID pattern
+    // Helper: get the term/semester/trimestre key for a given period
+    const getSemesterForPeriod = (p: any): string => {
+        if (p.term) return String(p.term).toLowerCase();
+        // Check ID pattern: s_s1_p1 → s1, p_t1_p1 → t1, m_t1 → t1
+        const idMatch = p.id?.match(/(?:s|t)(\d+)/i);
+        if (idMatch) return idMatch[0].toLowerCase();
+        // Check name pattern: T1-P1 → t1, S1-P1 → s1, Trimestre 1 → t1, Semestre 2 → s2
+        const nameMatch = p.name?.match(/(?:trimestre|semestre|t|s)\s*(\d+)/i);
+        if (nameMatch) {
+            const isSem = p.name.toLowerCase().includes('semestre') || p.name.toUpperCase().startsWith('S');
+            return `${isSem ? 's' : 't'}${nameMatch[1]}`;
+        }
+        return "t1";
+    };
+
+    // Derive terms (semesters or trimestres) from calendar periods
     const semesters = useMemo(() => {
         const semSet = new Set<string>();
         periods.forEach((p: any) => {
-            if (p.term) {
-                semSet.add(p.term);
-            } else {
-                // Parse from ID pattern: s_s1_p1 → s1, s_s2_p3 → s2
-                const match = p.id?.match(/s(\d+)/i);
-                if (match) {
-                    semSet.add(`s${match[1]}`);
-                }
-            }
+            semSet.add(getSemesterForPeriod(p));
         });
-        return Array.from(semSet);
+        const arr = Array.from(semSet);
+        return arr.length > 0 ? arr : ["t1"];
     }, [periods]);
-
-    // Helper: get the semester key for a given period
-    const getSemesterForPeriod = (p: any): string => {
-        if (p.term) return p.term;
-        const match = p.id?.match(/s(\d+)/i);
-        return match ? `s${match[1]}` : "s1";
-    };
 
     // Map periods to P1, P2... labels globally
     const periodLabels = useMemo(() => {
@@ -154,12 +157,16 @@ export default function GradeAggregatesPage() {
     }, [periods]);
 
     // Build a mapping: DB period name → calendar period ID
-    // This is the KEY fix: assessments have DB UUIDs, but we need calendar IDs
     const dbNameToCalendarId = useMemo(() => {
         const map: Record<string, string> = {};
+        const norm = (s: string) => s ? s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-_\s]+/g, "").trim() : "";
         periods.forEach((p: any) => {
             if (p.name) {
                 map[p.name.toLowerCase()] = p.id;
+                map[norm(p.name)] = p.id;
+            }
+            if (p.id) {
+                map[norm(p.id)] = p.id;
             }
         });
         return map;
@@ -167,44 +174,36 @@ export default function GradeAggregatesPage() {
 
     // Dynamic calculation of max points based on course configuration
     const baseMaxPoints = useMemo(() => {
-        const matchNameStr = courseName?.trim().toLowerCase() || "";
-        const coursesObj = schoolData?.courses as any || {};
-        
-        const normalizeGrade = (g: string) => {
-            if (!g) return "";
-            let norm = g.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-            norm = norm.replace(/1ere/g, '1e').replace(/1er/g, '1e');
-            norm = norm.replace(/([2-9])eme/g, '$1e');
-            norm = norm.replace(/education de base/g, 'cteb');
-            return norm.replace(/\s+/g, ' ');
-        };
+        const coursesObj = (schoolData?.courses as any) || {};
+        const norm = (s: string) => s ? s.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim() : "";
 
-        const classroomStr = normalizeGrade(classroomName || "");
+        const safeClassroom = classroomName || "";
+        const safeCourse = courseName || "";
+        const target = norm(safeCourse);
 
-        const gradeKey = Object.keys(coursesObj).find(k => {
-            const kLower = normalizeGrade(k);
-            return kLower === classroomStr || 
-                   classroomStr.includes(kLower) || 
-                   kLower.includes(classroomStr.split(' ')[0]);
-        });
-        
-        let courseDetail = null;
-        if (gradeKey) {
-            const gradeCourses = coursesObj[gradeKey] || [];
-            courseDetail = gradeCourses.find((c: any) => c.name?.trim().toLowerCase() === matchNameStr);
+        const gradeKey = safeClassroom 
+            ? Object.keys(coursesObj).find(k => classroomNamesMatch(k, safeClassroom))
+            : undefined;
+        if (gradeKey && Array.isArray(coursesObj[gradeKey])) {
+            const match = coursesObj[gradeKey].find(
+                (c: any) => norm(c.name) === target || norm(c.name).includes(target) || target.includes(norm(c.name))
+            );
+            if (match) return match.maxPoints ?? match.max ?? 20;
         }
 
-        if (!courseDetail || (!courseDetail.domaine && !courseDetail.max && !courseDetail.maxPoints)) {
-            for (const gKey of Object.keys(coursesObj)) {
-                const found = coursesObj[gKey].find((c: any) => c.name?.trim().toLowerCase() === matchNameStr);
-                if (found && (found.domaine || found.max || found.maxPoints)) {
-                    courseDetail = found;
-                    break;
+        // Fallback: search across all configured grades
+        for (const gKey of Object.keys(coursesObj)) {
+            if (Array.isArray(coursesObj[gKey])) {
+                const match = coursesObj[gKey].find(
+                    (c: any) => norm(c.name) === target || norm(c.name).includes(target) || target.includes(norm(c.name))
+                );
+                if (match && (match.maxPoints || match.max)) {
+                    return match.maxPoints ?? match.max ?? 20;
                 }
             }
         }
 
-        return courseDetail?.maxPoints ?? courseDetail?.max ?? 20;
+        return 20;
     }, [schoolData, classroomName, courseName]);
 
     const periodMaxes = useMemo(() => {
@@ -248,16 +247,15 @@ export default function GradeAggregatesPage() {
                 if (ass.isSuspended) return;
 
                 // Resolve: assessment's DB period → calendar period ID
-                // Strategy 1: Match by period name (most reliable based on our debug)
                 let calendarPeriodId: string | null = null;
+                const norm = (s: string) => s ? s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-_\s]+/g, "").trim() : "";
                 
                 if (ass.period?.name) {
-                    calendarPeriodId = dbNameToCalendarId[ass.period.name.toLowerCase()] || null;
+                    calendarPeriodId = dbNameToCalendarId[ass.period.name.toLowerCase()] || dbNameToCalendarId[norm(ass.period.name)] || null;
                 }
                 
-                // Strategy 2: Direct calendar ID match (fallback)
-                if (!calendarPeriodId) {
-                    const directMatch = periods.find((p: any) => p.id === ass.periodId);
+                if (!calendarPeriodId && ass.periodId) {
+                    const directMatch = periods.find((p: any) => p.id === ass.periodId || norm(p.id) === norm(ass.periodId));
                     if (directMatch) calendarPeriodId = directMatch.id;
                 }
 
@@ -267,11 +265,15 @@ export default function GradeAggregatesPage() {
                     // Add max weight to the denominator UNCONDITIONALLY to match Totals logic
                     studentGrades[calendarPeriodId].max += pondere;
 
-                    const result = ass.results?.find((r: any) => r.studentId === student.id);
+                    const result = ass.results?.find((r: any) => {
+                        const rId = String(r.studentId || "").toLowerCase().trim().replace(/[\s_]+/g, '-');
+                        const sId = String(student.id || "").toLowerCase().trim().replace(/[\s_]+/g, '-');
+                        const sMat = String(student.matricule || "").toLowerCase().trim().replace(/[\s_]+/g, '-');
+                        return rId === sId || rId === sMat || sId.includes(rId) || rId.includes(sId);
+                    });
                     
                     // Only add to total if result exists and not absent
                     if (result && !result.isAbsent && ass.maxScore > 0) {
-                        // USE publishedScore just like in TotalsPage
                         const rawScore = result.publishedScore ?? result.score ?? "0";
                         const normalizedScore = (parseFloat(rawScore) / parseFloat(ass.maxScore)) * pondere;
                         studentGrades[calendarPeriodId].total += normalizedScore || 0;

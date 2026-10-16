@@ -1,6 +1,8 @@
 // src/app/api/teacher/grades/route.ts
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { inferClassroomLevel } from "@/lib/classroom-utils";
+
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -453,6 +455,7 @@ export async function POST(req: NextRequest) {
                 const school = await tx.school.findUnique({ where: { matricule } });
                 let targetName = classroomId.trim();
                 let foundGrade = "";
+                let foundLevel = "";
 
                 if (isClassroomIdUuid && courseId.includes('-')) {
                     // Extract classroom name from school structure keys matching courseId prefix
@@ -477,14 +480,15 @@ export async function POST(req: NextRequest) {
                 if (school) {
                     const structure = JSON.parse(school.structure || "{}");
                     const normTarget = normStr(targetName);
+
+                    // Use canonical inferClassroomLevel (with structure for authoritative lookup)
+                    foundLevel = inferClassroomLevel(targetName, structure);
                     
-                    // Iterate through levels (primaire, secondaire...)
+                    // Still resolve the grade name from the structure for DB storage
                     for (const levelKey of Object.keys(structure)) {
                         const levelData = structure[levelKey];
                         if (typeof levelData !== 'object') continue;
-                        
                         for (const gradeName of Object.keys(levelData)) {
-                            // Normalize to handle '1ère' vs '1e'
                             const nGrade = normStr(gradeName).replace('1e ', '1ere ');
                             const nTarget = normTarget.replace('1e ', '1ere ');
                             if (nTarget.startsWith(nGrade) || nTarget.includes(nGrade)) {
@@ -499,10 +503,12 @@ export async function POST(req: NextRequest) {
                         const found = structure.classrooms.find((c: any) => normStr(c.name) === normTarget);
                         if (found) foundGrade = found.grade;
                     }
+                } else {
+                    // No school record — use name-only inference
+                    foundLevel = inferClassroomLevel(targetName);
                 }
 
                 if (!foundGrade) {
-                    // Extract grade from targetName, e.g. "1ERE HUMANITE" -> "1ERE"
                     foundGrade = targetName.split(' ')[0] || "Non spécifié";
                 }
 
@@ -510,13 +516,13 @@ export async function POST(req: NextRequest) {
                     data: {
                         name: targetName,
                         grade: foundGrade,
-                        level: "SECONDAIRE", // Default best guess
+                        level: foundLevel,
                         schoolMatricule: matricule
                     }
                 });
                 existingClassroom = created;
                 solvedClassroomId = created.id;
-                console.log("Created & solved classroomId (fallback):", solvedClassroomId);
+                console.log("Created & solved classroomId (fallback):", solvedClassroomId, "level:", foundLevel);
             }
 
             // Sync/Resolve Course
@@ -651,17 +657,10 @@ export async function POST(req: NextRequest) {
             const normPunct = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-_\s]+/g, "").trim();
             const targetPeriodNorm = normStr(periodId);
             const targetPeriodPunct = normPunct(periodId);
-            // Determine the classroom's level to search in the correct calendar section
-            const classroomNameLower = (existingClassroom?.name || classroomId || "").toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            const isMaternelleClass = classroomNameLower.includes("maternelle");
-            const isPrimaireClass = !isMaternelleClass && (
-                classroomNameLower.includes("primaire") ||
-                // Heuristic: named like "1ère", "2ème" etc. without secondaire keywords
-                (classroomNameLower.match(/^\d+/) && !classroomNameLower.includes("cteb") && !classroomNameLower.includes("humanite"))
-            );
-            const calLevel = isMaternelleClass ? "maternelle" : (isPrimaireClass ? "primaire" : "secondaire");
-            const levelForDB = calLevel.toUpperCase();
+            // Determine the classroom's level using the canonical utility
+            const levelForDB = existingClassroom?.level ||
+                inferClassroomLevel(existingClassroom?.name || classroomId);
+            const calLevel = levelForDB.toLowerCase();
 
             let existingPeriod = null;
             if (isPeriodIdUuid) {

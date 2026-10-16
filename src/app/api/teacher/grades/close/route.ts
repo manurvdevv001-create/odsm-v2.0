@@ -2,6 +2,8 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { getPeriodState } from "@/lib/assessment-period";
+import { inferClassroomLevel } from "@/lib/classroom-utils";
+
 
 export async function POST(req: NextRequest) {
     try {
@@ -150,8 +152,21 @@ export async function POST(req: NextRequest) {
             : null;
         const closureCalendar = closureSchool?.calendar ? JSON.parse(closureSchool.calendar) : {};
         const closurePeriod = solvedPeriodIds[0]
-            ? await db.period.findUnique({ where: { id: solvedPeriodIds[0] }, select: { name: true } })
+            ? await db.period.findUnique({ where: { id: solvedPeriodIds[0] }, select: { name: true, level: true } })
             : null;
+
+        // Auto-heal classroom level if its DB value contradicts its name
+        if (resolvedClassroom) {
+            const correctLevel = inferClassroomLevel(resolvedClassroom.name);
+            if (correctLevel !== resolvedClassroom.level) {
+                await db.classroom.update({
+                    where: { id: resolvedClassroom.id },
+                    data: { level: correctLevel }
+                }).catch(() => {});
+                resolvedClassroom.level = correctLevel;
+            }
+        }
+
         if (!resolvedClassroom || !solvedPeriodIds[0] || getPeriodState(closureCalendar, resolvedClassroom, solvedPeriodIds[0], closurePeriod?.name) !== "active") {
             return NextResponse.json({ error: "Un cours ne peut être clôturé que pendant la période active." }, { status: 403 });
         }

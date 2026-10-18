@@ -364,20 +364,20 @@ export default function FinanceSettingsPage() {
                             <ArrowLeft className="mr-2 h-4 w-4" /> Retour aux Paramètres
                         </Button>
                     </Link>
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold tracking-tight">Paramètres Financiers</h1>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Paramètres Financiers</h1>
                         {activeYear && (
-                            <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50">
+                            <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50 text-xs">
                                 {activeYear}
                             </Badge>
                         )}
                     </div>
-                    <p className="text-muted-foreground mt-1">
+                    <p className="text-muted-foreground text-xs sm:text-sm mt-1">
                         Gérez les devises, les frais individuels et la composition des rubriques
                         {activeYear ? ` pour ${activeYear}` : ''}.
                     </p>
                 </div>
-                <Button onClick={handleSave} disabled={isSaving} size="lg">
+                <Button onClick={handleSave} disabled={isSaving} size="default" className="w-full sm:w-auto self-stretch sm:self-auto">
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Enregistrer
                 </Button>
@@ -548,54 +548,58 @@ export default function FinanceSettingsPage() {
                 <AccordionItem value="item-3" className="bg-card rounded-lg border px-1">
                     <AccordionTrigger className="px-4 py-3 hover:no-underline">
                         <div className="flex items-center gap-2">
-                            <Library className="w-5 h-5" />
-                            <span className="text-lg font-semibold">Banque de Frais</span>
+                            <Library className="w-5 h-5 shrink-0" />
+                            <span className="text-base sm:text-lg font-semibold text-left">Banque de Frais</span>
                         </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4 pt-2">
+                    <AccordionContent className="px-3 sm:px-4 pb-4 pt-2">
             <Card className="border-0 shadow-none">
                 <CardHeader className="px-0 pt-0">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div>
-                            <CardTitle className="flex items-center gap-2"><Library className="w-5 h-5" /> Banque de Frais</CardTitle>
-                            <CardDescription>Créez ici tous les frais possibles (tranches, frais uniques, etc.). Ce sont les briques de base de votre facturation.</CardDescription>
+                            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl"><Library className="w-5 h-5" /> Banque de Frais</CardTitle>
+                            <CardDescription className="text-xs sm:text-sm mt-1">Créez ici tous les frais possibles (tranches, frais uniques, etc.). Ce sont les briques de base de votre facturation.</CardDescription>
                         </div>
-                        <Button size="sm" onClick={handleAddFeeItem}>
+                        <Button size="sm" onClick={handleAddFeeItem} className="self-start sm:self-auto shrink-0">
                             <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un frais
                         </Button>
                     </div>
                 </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
+                <CardContent className="px-0 sm:px-6">
+                    <div className="space-y-2.5">
                         {settings.feeItems.length === 0 && (
-                            <p className="text-center text-muted-foreground py-4">Aucun frais créé. Cliquez sur &quot;Ajouter un frais&quot; pour commencer.</p>
+                            <p className="text-center text-muted-foreground py-4 text-xs sm:text-sm">Aucun frais créé. Cliquez sur &quot;Ajouter un frais&quot; pour commencer.</p>
                         )}
                         {settings.feeItems.map(item => (
-                            <div key={item.id} className="flex items-center gap-2 p-2 border rounded-md">
-                                <Input
-                                    placeholder="Nom du frais (ex: 1ère Tranche Minerval)"
-                                    value={item.name}
-                                    onChange={e => handleFeeItemChange(item.id, 'name', e.target.value)}
-                                    className="h-9"
-                                />
-                                <Input
-                                    type="number"
-                                    placeholder="Montant"
-                                    value={item.amount}
-                                    onChange={e => handleFeeItemChange(item.id, 'amount', Number(e.target.value))}
-                                    className="w-32 h-9"
-                                />
-                                <Select value={item.currency} onValueChange={v => handleFeeItemChange(item.id, 'currency', v)}>
-                                    <SelectTrigger className="w-28 h-9"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        {enabledCurrencies.map(c => (
-                                            <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveFeeItem(item.id)}>
-                                    <Trash2 className="w-4 h-4 text-destructive" />
-                                </Button>
+                            <div key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 sm:p-2 border rounded-xl sm:rounded-md bg-muted/10 sm:bg-transparent">
+                                <div className="flex-1 min-w-0">
+                                    <Input
+                                        placeholder="Nom du frais (ex: 1ère Tranche Minerval)"
+                                        value={item.name}
+                                        onChange={e => handleFeeItemChange(item.id, 'name', e.target.value)}
+                                        className="h-9 text-xs sm:text-sm"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                    <Input
+                                        type="number"
+                                        placeholder="Montant"
+                                        value={item.amount}
+                                        onChange={e => handleFeeItemChange(item.id, 'amount', Number(e.target.value))}
+                                        className="flex-1 sm:w-28 sm:flex-none h-9 text-xs sm:text-sm"
+                                    />
+                                    <Select value={item.currency} onValueChange={v => handleFeeItemChange(item.id, 'currency', v)}>
+                                        <SelectTrigger className="w-24 sm:w-24 h-9 text-xs sm:text-sm shrink-0"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {enabledCurrencies.map(c => (
+                                                <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveFeeItem(item.id)} className="h-9 w-9 shrink-0 text-destructive hover:bg-destructive/10">
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
                             </div>
                         ))}
                     </div>
